@@ -1,0 +1,11 @@
+body {
+  background-color: #f5f0eb;
+  font-family: Georgia, serif;
+  text-align: center;
+  padding: 50px;
+  color: #2c2c2c;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
