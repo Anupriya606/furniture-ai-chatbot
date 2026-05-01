@@ -1,14 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Furniture AI Assistant</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FurniAI — Furniture Design Assistant</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <h1>🛋️ Furniture AI Assistant</h1>
-  <p>Your personal furniture design expert</p>
+  <div class="app">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo">🛋 FurniAI</div>
+      <button class="new-chat-btn" onclick="clearChat()">+ New conversation</button>
+      <div class="sidebar-label">RECENT</div>
+      <div class="history-item active">Sofa for small room</div>
+      <div class="history-item">Bedroom under ₹50k</div>
+      <div class="history-item">Office setup ideas</div>
+    </div>
+
+    <!-- MAIN CHAT AREA -->
+    <div class="main">
+
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <div class="topbar-icon">F</div>
+        <div>
+          <div class="topbar-title">Furniture Expert</div>
+          <div class="topbar-sub">AI Design Consultant</div>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="messages" id="messages">
+        <div class="msg ai">
+          <div class="avatar ai">F</div>
+          <div class="bubble">
+            <div class="bubble-inner">
+              Hello! I'm your personal Furniture Design Expert. I can help you with recommendations based on your room size and budget, cost estimates, and style advice. What are you looking to furnish today?
+            </div>
+            <div class="chips">
+              <span class="chip" onclick="sendChip('Recommend furniture for my room')">Recommend furniture</span>
+              <span class="chip" onclick="sendChip('Give me a cost estimate')">Estimate cost</span>
+              <span class="chip" onclick="sendChip('Give me style advice')">Style advice</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT BAR -->
+      <div class="inputbar">
+        <input
+          type="text"
+          id="userInput"
+          placeholder="Ask about furniture, costs, styles..."
+          onkeydown="if(event.key === 'Enter') sendMessage()"
+        />
+        <button class="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="#3B2A1A" width="16" height="16">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
