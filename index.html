@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FurniAI — Furniture Design Assistant</title>
-  <link rel="stylesheet" href="style.css" />git add .
-git commit -m "Phase 4: AI working with Groq API - furniture expert responding perfectly"
-git push
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -57,12 +55,26 @@ git push
   </div>
 </div>
 
+      <!-- IMAGE PREVIEW -->
+      <div id="imagePreview" style="display:none; padding: 8px 20px 0 20px;">
+        <div style="position:relative; display:inline-block;">
+          <img id="previewImg" style="height:80px; border-radius:8px; border:1px solid #D4A96A;" />
+          <button onclick="removeImage()" style="position:absolute; top:-6px; right:-6px; background:#3B2A1A; color:#D4A96A; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px;">✕</button>
+        </div>
+      </div>
+
       <!-- INPUT BAR -->
       <div class="inputbar">
+        <label for="imageInput" class="upload-btn" title="Upload room photo">
+          <svg viewBox="0 0 24 24" fill="#D4A96A" width="20" height="20">
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-1.1 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+          </svg>
+        </label>
+        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImage(event)" />
         <input
           type="text"
           id="userInput"
-          placeholder="Ask about furniture, costs, styles..."
+          placeholder="Ask about furniture or upload a room photo..."
           onkeydown="if(event.key === 'Enter') sendMessage()"
         />
         <button class="send-btn" onclick="sendMessage()">
@@ -75,7 +87,8 @@ git push
     </div>
   </div>
 
-  <script src="prompts/system_prompt.js"></script>
+  <script src="config.js"></script>
+<script src="prompts/system_prompt.js"></script>
 <script src="data/furniture_knowledge.js"></script>
 <script src="app.js"></script>
 </body>
