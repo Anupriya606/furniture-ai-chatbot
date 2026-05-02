@@ -177,7 +177,7 @@ function extractFurnitureKeyword(userText, aiReply) {
   }
 
   if (foundFurniture) {
-    const parts = [foundColor, foundSize, foundStyle, foundFurniture].filter(Boolean);
+    const parts = [foundColor, foundSize, foundStyle, foundFurniture, 'furniture interior design'].filter(Boolean);
     return parts.join(' ');
   }
 
