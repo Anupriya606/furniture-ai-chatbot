@@ -45,6 +45,7 @@ async function searchFurnitureImage(query) {
       }
     );
     const data = await response.json();
+    console.log("Unsplash query:", query);
     console.log("Unsplash data:", data);
     if (data.results && data.results.length > 0) {
       return data.results.map(img => ({
@@ -81,7 +82,7 @@ function showFurnitureImages(images, query) {
     <div class="bubble">
       <div class="bubble-inner">
         <p style="color:#9C7A4A; font-size:13px; margin-bottom:8px;">
-          🖼️ Here's how this would look in your room:
+          🖼️ Here's how <strong>${query}</strong> looks:
         </p>
         <div class="furniture-images-grid">
           ${imagesHTML}
@@ -100,13 +101,14 @@ function extractFurnitureKeyword(userText, aiReply) {
   const furnitureWords = [
     'study table', 'dining table', 'coffee table', 'side table',
     'tv unit', 'dining chair', 'armchair', 'rocking chair',
+    'bunk bed', 'king bed', 'queen bed', 'single bed', 'double bed',
     'sofa', 'couch', 'bed', 'chair', 'table', 'wardrobe',
     'shelf', 'desk', 'lamp', 'rug', 'cabinet',
     'bookshelf', 'dresser', 'ottoman', 'sectional'
   ];
 
   const colorWords = [
-    'pink', 'blue', 'red', 'green', 'yellow', 'black', 'white',
+    'red', 'pink', 'blue', 'green', 'yellow', 'black', 'white',
     'grey', 'gray', 'brown', 'beige', 'orange', 'purple',
     'navy', 'cream', 'golden', 'wooden', 'oak', 'walnut', 'teak'
   ];
@@ -116,12 +118,17 @@ function extractFurnitureKeyword(userText, aiReply) {
     'scandinavian', 'industrial', 'luxury', 'vintage', 'rustic'
   ];
 
+  const sizeWords = [
+    'large', 'big', 'small', 'compact', 'queen', 'king', 'single'
+  ];
+
   const userLower = userText.toLowerCase();
   const aiLower = aiReply.toLowerCase();
 
   let foundFurniture = '';
   let foundColor = '';
   let foundStyle = '';
+  let foundSize = '';
 
   for (const word of furnitureWords) {
     if (userLower.includes(word)) {
@@ -162,8 +169,15 @@ function extractFurnitureKeyword(userText, aiReply) {
     }
   }
 
+  for (const word of sizeWords) {
+    if (userLower.includes(word)) {
+      foundSize = word;
+      break;
+    }
+  }
+
   if (foundFurniture) {
-    const parts = [foundColor, foundStyle, foundFurniture, 'interior'].filter(Boolean);
+    const parts = [foundColor, foundSize, foundStyle, foundFurniture].filter(Boolean);
     return parts.join(' ');
   }
 
