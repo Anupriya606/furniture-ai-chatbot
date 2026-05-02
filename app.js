@@ -177,11 +177,14 @@ function extractFurnitureKeyword(userText, aiReply) {
   }
 
   if (foundFurniture) {
-    const parts = [foundColor, foundSize, foundStyle, foundFurniture, 'furniture interior design'].filter(Boolean);
-    return parts.join(' ');
+    if (foundColor) {
+      return `${foundColor} colored ${foundFurniture} furniture room interior`;
+    } else if (foundStyle) {
+      return `${foundStyle} ${foundSize} ${foundFurniture} furniture interior`.trim();
+    } else {
+      return `${foundSize} ${foundFurniture} furniture interior design`.trim();
+    }
   }
-
-  return null;
 }
 
 async function sendMessage() {
