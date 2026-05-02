@@ -1,19 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FurniAI — Furniture Design Assistant</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 </head>
 <body>
-
   <div class="app">
 
     <!-- LEFT SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-logo">🛋 FurniAI</div>
+
+      <!-- LANGUAGE SELECTOR -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">🌍 LANGUAGE</div>
+        <select id="languageSelect" class="selector" onchange="changeLanguage(this.value)">
+          <option value="en">English</option>
+          <option value="hi">हिंदी</option>
+          <option value="mr">मराठी</option>
+          <option value="gu">ગુજરાતી</option>
+          <option value="ta">தமிழ்</option>
+          <option value="te">తెలుగు</option>
+        </select>
+      </div>
+
+      <!-- ROOM TYPE SELECTOR -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">🏠 ROOM TYPE</div>
+        <select id="roomSelect" class="selector" onchange="changeRoom(this.value)">
+          <option value="living room">Living Room</option>
+          <option value="bedroom">Bedroom</option>
+          <option value="kitchen">Kitchen</option>
+          <option value="office">Home Office</option>
+          <option value="dining room">Dining Room</option>
+          <option value="bathroom">Bathroom</option>
+          <option value="kids room">Kids Room</option>
+          <option value="balcony">Balcony</option>
+        </select>
+      </div>
+
+      <!-- DARK MODE -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">🎨 THEME</div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+          <span id="themeIcon">🌙</span>
+          <span id="themeText">Dark Mode</span>
+        </button>
+      </div>
+
+      <!-- TEXT TO SPEECH -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">🔊 VOICE</div>
+        <button class="theme-toggle" onclick="toggleTTS()">
+          <span id="ttsIcon">🔇</span>
+          <span id="ttsText">Enable Voice</span>
+        </button>
+      </div>
+
       <button class="new-chat-btn" onclick="clearChat()">+ New conversation</button>
+
       <div class="sidebar-label">RECENT</div>
       <div class="history-item active">Sofa for small room</div>
       <div class="history-item">Bedroom under ₹50k</div>
@@ -28,7 +76,11 @@
         <div class="topbar-icon">F</div>
         <div>
           <div class="topbar-title">Furniture Expert</div>
-          <div class="topbar-sub">AI Design Consultant</div>
+          <div class="topbar-sub" id="topbarSub">AI Design Consultant · Living Room Mode</div>
+        </div>
+        <div class="topbar-badges">
+          <span class="badge" id="roomBadge">🛋 Living Room</span>
+          <span class="badge" id="langBadge">🌍 English</span>
         </div>
       </div>
 
@@ -37,7 +89,7 @@
         <div class="msg ai">
           <div class="avatar ai">F</div>
           <div class="bubble">
-            <div class="bubble-inner">
+            <div class="bubble-inner" id="welcomeMsg">
               Hello! I'm your personal Furniture Design Expert. I can help you with recommendations based on your room size and budget, cost estimates, and style advice. What are you looking to furnish today?
             </div>
             <div class="chips">
@@ -48,37 +100,28 @@
           </div>
         </div>
       </div>
-      <div id="imagePreview" style="display:none; padding: 8px 20px;">
-  <div style="position:relative; display:inline-block;">
-    <img id="previewImg" style="height:80px; border-radius:8px; border:1px solid #D4A96A;" />
-    <button onclick="removeImage()" style="position:absolute; top:-6px; right:-6px; background:#3B2A1A; color:#D4A96A; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px;">✕</button>
-  </div>
-</div>
 
       <!-- IMAGE PREVIEW -->
       <div id="imagePreview" style="display:none; padding: 8px 20px 0 20px;">
         <div style="position:relative; display:inline-block;">
-          <img id="previewImg" style="height:80px; border-radius:8px; border:1px solid #D4A96A;" />
-          <button onclick="removeImage()" style="position:absolute; top:-6px; right:-6px; background:#3B2A1A; color:#D4A96A; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px;">✕</button>
+          <img id="previewImg" style="height:80px; border-radius:8px; border:1px solid var(--gold);" />
+          <button onclick="removeImage()" style="position:absolute; top:-6px; right:-6px; background:var(--sidebar-bg); color:var(--gold); border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px;">✕</button>
         </div>
       </div>
 
       <!-- INPUT BAR -->
       <div class="inputbar">
         <label for="imageInput" class="upload-btn" title="Upload room photo">
-          <svg viewBox="0 0 24 24" fill="#D4A96A" width="20" height="20">
+          <svg viewBox="0 0 24 24" fill="var(--gold)" width="20" height="20">
             <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-1.1 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
           </svg>
         </label>
         <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImage(event)" />
-        <input
-          type="text"
-          id="userInput"
-          placeholder="Ask about furniture or upload a room photo..."
-          onkeydown="if(event.key === 'Enter') sendMessage()"
-        />
+        <input type="text" id="userInput"
+          placeholder="Ask about furniture, costs, styles..."
+          onkeydown="if(event.key === 'Enter') sendMessage()" />
         <button class="send-btn" onclick="sendMessage()">
-          <svg viewBox="0 0 24 24" fill="#3B2A1A" width="16" height="16">
+          <svg viewBox="0 0 24 24" fill="var(--sidebar-bg)" width="16" height="16">
             <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
           </svg>
         </button>
@@ -87,12 +130,9 @@
     </div>
   </div>
 
- <script>
-  const GROQ_KEY = "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";
-  const UNSPLASH_ACCESS_KEY = "3hwSCuLF4Lh_Swwd2sEtwQ-LnIlkwX_N-AY1jclaKH8";
-</script>
-<script src="prompts/system_prompt.js"></script>
-<script src="data/furniture_knowledge.js"></script>
-<script src="app.js"></script>
+  <script src="config.js"></script>
+  <script src="prompts/system_prompt.js"></script>
+  <script src="data/furniture_knowledge.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -6,6 +6,61 @@ const chatHistory = [];
 let selectedImageBase64 = null;
 let selectedImageType = null;
 let selectedImageSrc = null;
+let ttsEnabled = false;
+let currentLanguage = 'en';
+let currentRoom = 'living room';
+
+const languageNames = {
+  en: 'English', hi: 'हिंदी', mr: 'मराठी',
+  gu: 'ગુજરાતી', ta: 'தமிழ்', te: 'తెలుగు'
+};
+
+const roomEmojis = {
+  'living room': '🛋', 'bedroom': '🛏', 'kitchen': '🍳',
+  'office': '💼', 'dining room': '🍽', 'bathroom': '🚿',
+  'kids room': '🧸', 'balcony': '🌿'
+};
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+  document.getElementById('themeText').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+}
+
+function toggleTTS() {
+  ttsEnabled = !ttsEnabled;
+  document.getElementById('ttsIcon').textContent = ttsEnabled ? '🔊' : '🔇';
+  document.getElementById('ttsText').textContent = ttsEnabled ? 'Voice On' : 'Enable Voice';
+  if (!ttsEnabled) window.speechSynthesis.cancel();
+}
+
+function speakText(text) {
+  if (!ttsEnabled) return;
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/<[^>]*>/g, '').replace(/[*#]/g, '');
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = currentLanguage === 'hi' ? 'hi-IN' :
+                   currentLanguage === 'ta' ? 'ta-IN' :
+                   currentLanguage === 'te' ? 'te-IN' : 'en-IN';
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
+function changeLanguage(lang) {
+  currentLanguage = lang;
+  document.getElementById('langBadge').textContent = '🌍 ' + languageNames[lang];
+  addMessage(`Language changed to ${languageNames[lang]}. I'll respond in ${languageNames[lang]} from now on!`, 'ai');
+}
+
+function changeRoom(room) {
+  currentRoom = room;
+  const emoji = roomEmojis[room] || '🏠';
+  document.getElementById('roomBadge').textContent = emoji + ' ' + room.charAt(0).toUpperCase() + room.slice(1);
+  document.getElementById('topbarSub').textContent = `AI Design Consultant · ${room.charAt(0).toUpperCase() + room.slice(1)} Mode`;
+  addMessage(`Great! I'm now in ${room} mode. Ask me anything about your ${room} furniture!`, 'ai');
+}
 
 function handleImage(event) {
   const file = event.target.files[0];
@@ -38,18 +93,11 @@ async function searchFurnitureImage(query) {
   try {
     const response = await fetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=3&orientation=landscape`,
-      {
-        headers: {
-          "Authorization": `Client-ID ${UNSPLASH_KEY}`
-        }
-      }
+      { headers: { "Authorization": `Client-ID ${UNSPLASH_KEY}` } }
     );
     const data = await response.json();
-    console.log("Unsplash query:", query);
-    console.log("Unsplash data:", data);
     if (data.results && data.results.length > 0) {
       return data.results.map(img => ({
-        url: img.urls.regular,
         thumb: img.urls.small,
         alt: img.alt_description || query,
         photographer: img.user.name,
@@ -67,7 +115,7 @@ function showFurnitureImages(images, query) {
   const messages = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'msg ai';
-
+  const cleanQuery = query.replace('furniture interior design', '').trim();
   let imagesHTML = images.slice(0, 3).map(img => `
     <div class="furniture-img-card">
       <img src="${img.thumb}" alt="${img.alt}"
@@ -81,13 +129,11 @@ function showFurnitureImages(images, query) {
     <div class="avatar ai">F</div>
     <div class="bubble">
       <div class="bubble-inner">
-        <p style="color:#9C7A4A; font-size:13px; margin-bottom:8px;">
-          🖼️ Here's how <strong>${query}</strong> looks:
+        <p style="color:var(--text-light); font-size:13px; margin-bottom:8px;">
+          🖼️ Here are some <strong>${cleanQuery}</strong> ideas:
         </p>
-        <div class="furniture-images-grid">
-          ${imagesHTML}
-        </div>
-        <p style="font-size:11px; color:#9C7A4A; margin-top:6px;">
+        <div class="furniture-images-grid">${imagesHTML}</div>
+        <p style="font-size:11px; color:var(--text-light); margin-top:6px;">
           Click any image to view full size
         </p>
       </div>
@@ -118,9 +164,7 @@ function extractFurnitureKeyword(userText, aiReply) {
     'scandinavian', 'industrial', 'luxury', 'vintage', 'rustic'
   ];
 
-  const sizeWords = [
-    'large', 'big', 'small', 'compact', 'queen', 'king', 'single'
-  ];
+  const sizeWords = ['large', 'big', 'small', 'compact', 'queen', 'king', 'single'];
 
   const userLower = userText.toLowerCase();
   const aiLower = aiReply.toLowerCase();
@@ -131,60 +175,36 @@ function extractFurnitureKeyword(userText, aiReply) {
   let foundSize = '';
 
   for (const word of furnitureWords) {
-    if (userLower.includes(word)) {
-      foundFurniture = word;
-      break;
-    }
+    if (userLower.includes(word)) { foundFurniture = word; break; }
   }
-
   if (!foundFurniture) {
     for (const word of furnitureWords) {
-      if (aiLower.includes(word)) {
-        foundFurniture = word;
-        break;
-      }
+      if (aiLower.includes(word)) { foundFurniture = word; break; }
     }
   }
 
   for (const word of colorWords) {
-    if (userLower.includes(word)) {
-      foundColor = word;
-      break;
-    }
+    if (userLower.includes(word)) { foundColor = word; break; }
   }
-
   if (!foundColor) {
     for (const word of colorWords) {
-      if (aiLower.includes(word)) {
-        foundColor = word;
-        break;
-      }
+      if (aiLower.includes(word)) { foundColor = word; break; }
     }
   }
 
   for (const word of styleWords) {
-    if (userLower.includes(word)) {
-      foundStyle = word;
-      break;
-    }
+    if (userLower.includes(word)) { foundStyle = word; break; }
   }
-
   for (const word of sizeWords) {
-    if (userLower.includes(word)) {
-      foundSize = word;
-      break;
-    }
+    if (userLower.includes(word)) { foundSize = word; break; }
   }
 
   if (foundFurniture) {
-    if (foundColor) {
-      return `${foundColor} colored ${foundFurniture} furniture room interior`;
-    } else if (foundStyle) {
-      return `${foundStyle} ${foundSize} ${foundFurniture} furniture interior`.trim();
-    } else {
-      return `${foundSize} ${foundFurniture} furniture interior design`.trim();
-    }
+    if (foundColor) return `${foundColor} colored ${foundFurniture} furniture room interior`;
+    else if (foundStyle) return `${foundStyle} ${foundSize} ${foundFurniture} furniture interior`.trim();
+    else return `${foundSize} ${foundFurniture} furniture interior design`.trim();
   }
+  return null;
 }
 
 async function sendMessage() {
@@ -202,17 +222,21 @@ async function sendMessage() {
 
   input.value = '';
 
-  const userMessage = { role: "user", content: userText };
+  const languageInstruction = currentLanguage !== 'en'
+    ? `IMPORTANT: Respond in ${languageNames[currentLanguage]} language only.` : '';
+  const roomInstruction = `The user is asking about their ${currentRoom}.`;
+
+  const userMessage = {
+    role: "user",
+    content: `${languageInstruction} ${roomInstruction} ${userText}`
+  };
+
   chatHistory.push(userMessage);
   removeImage();
   showTyping();
 
   const fullSystem = SYSTEM_PROMPT + "\n\n" + FURNITURE_KNOWLEDGE;
-
-  const messages = [
-    { role: "system", content: fullSystem },
-    ...chatHistory
-  ];
+  const messages = [{ role: "system", content: fullSystem }, ...chatHistory];
 
   const requestBody = {
     model: "llama-3.3-70b-versatile",
@@ -232,7 +256,6 @@ async function sendMessage() {
     });
 
     const data = await response.json();
-    console.log("Groq Response:", data);
 
     if (data.error) {
       removeTyping();
@@ -243,13 +266,12 @@ async function sendMessage() {
     const reply = data.choices[0].message.content;
     removeTyping();
     addMessage(reply, 'ai');
+    speakText(reply);
     chatHistory.push({ role: "assistant", content: reply });
 
     const furnitureKeywords = extractFurnitureKeyword(userText, reply);
-    console.log("Keywords found:", furnitureKeywords);
     if (furnitureKeywords) {
       const images = await searchFurnitureImage(furnitureKeywords);
-      console.log("Images found:", images);
       if (images && images.length > 0) {
         showFurnitureImages(images, furnitureKeywords);
       }
@@ -290,8 +312,8 @@ function formatAIMessage(text) {
     if (/^\d+\.\s/.test(line)) {
       if (!inList) { result += '<ul style="list-style:none;padding:0;">'; inList = true; }
       const content = line.replace(/^\d+\.\s/, '');
-      result += `<li style="padding:4px 0; border-bottom:1px solid #F0E6D3;">
-                  <span style="color:#D4A96A; font-weight:bold; margin-right:6px;">›</span>
+      result += `<li style="padding:4px 0; border-bottom:1px solid var(--bubble-border);">
+                  <span style="color:var(--gold); font-weight:bold; margin-right:6px;">›</span>
                   ${content}
                  </li>`;
     } else {
@@ -308,10 +330,17 @@ function addMessage(text, sender) {
   const div = document.createElement('div');
   div.className = `msg ${sender}`;
   const content = sender === 'ai' ? formatAIMessage(text) : text;
+  let speakButton = sender === 'ai' ? `
+    <div>
+      <button class="speak-btn" onclick="speakText(\`${text.replace(/`/g, "'")}\`)">
+        🔊 Listen
+      </button>
+    </div>` : '';
   div.innerHTML = `
     <div class="avatar ${sender}">${sender === 'ai' ? 'F' : 'M'}</div>
     <div class="bubble">
       <div class="bubble-inner">${content}</div>
+      ${speakButton}
     </div>
   `;
   messages.appendChild(div);
