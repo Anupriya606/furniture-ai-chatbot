@@ -328,35 +328,66 @@ async function sendMessage() {
     const brands = extractBrandsFromReply(reply);
     const furnitureKeyword = extractFurnitureKeyword(userText, reply);
 
-    if (brands.length > 0 && furnitureKeyword) {
-      showTyping();
-      const brandImagePromises = brands.map(brand =>
-        searchFurnitureImage(`${brand} ${furnitureKeyword} India product`)
-      );
-      const brandResults = await Promise.all(brandImagePromises);
-      removeTyping();
+    console.log("Brands found:", brands);
+    console.log("Furniture keyword:", furnitureKeyword);
 
-      const brandImages = [];
-      brandResults.forEach((result, index) => {
-        if (result && result.length > 0) {
-          brandImages.push({
-            ...result[0],
-            brandName: brands[index]
-          });
+    if (furnitureKeyword) {
+      if (brands.length > 0) {
+        showTyping();
+        const brandImagePromises = brands.map(brand =>
+          searchFurnitureImage(`${brand} ${furnitureKeyword} India product`)
+        );
+        const brandResults = await Promise.all(brandImagePromises);
+        removeTyping();
+
+        const brandImages = [];
+        brandResults.forEach((result, index) => {
+          if (result && result.length > 0) {
+            brandImages.push({
+              ...result[0],
+              brandName: brands[index]
+            });
+          }
+        });
+
+        if (brandImages.length > 0) {
+          showBrandImages(brandImages, furnitureKeyword);
+        } else {
+          const fallbackImages = await searchFurnitureImage(`${furnitureKeyword} India`);
+          if (fallbackImages && fallbackImages.length > 0) {
+            showFurnitureImages(fallbackImages, furnitureKeyword);
+          }
         }
-      });
 
-      if (brandImages.length > 0) {
-        showBrandImages(brandImages, furnitureKeyword);
-      }
+      } else {
+        const defaultBrands = ['Wakefit', 'Pepperfry', 'Urban Ladder'];
+        showTyping();
+        const brandImagePromises = defaultBrands.map(brand =>
+          searchFurnitureImage(`${brand} ${furnitureKeyword}`)
+        );
+        const brandResults = await Promise.all(brandImagePromises);
+        removeTyping();
 
-    } else if (furnitureKeyword) {
-      const images = await searchFurnitureImage(furnitureKeyword);
-      if (images && images.length > 0) {
-        showFurnitureImages(images, furnitureKeyword);
+        const brandImages = [];
+        brandResults.forEach((result, index) => {
+          if (result && result.length > 0) {
+            brandImages.push({
+              ...result[0],
+              brandName: defaultBrands[index]
+            });
+          }
+        });
+
+        if (brandImages.length > 0) {
+          showBrandImages(brandImages, furnitureKeyword);
+        } else {
+          const fallbackImages = await searchFurnitureImage(`${furnitureKeyword} furniture India`);
+          if (fallbackImages && fallbackImages.length > 0) {
+            showFurnitureImages(fallbackImages, furnitureKeyword);
+          }
+        }
       }
     }
-
   } catch (error) {
     removeTyping();
     addMessage("Connection failed: " + error.message, 'ai');
