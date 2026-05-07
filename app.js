@@ -257,7 +257,7 @@ function extractFurnitureKeyword(userText, aiReply) {
   if (foundFurniture) {
     if (foundColor) return `${foundColor} ${foundFurniture} furniture product`;
     else if (foundStyle) return `${foundStyle} ${foundFurniture} furniture product`;
-    else return `${foundSize} ${foundFurniture} furniture product`.trim();
+    else return `${foundSize} ${foundFurniture} beige white grey furniture product`.trim();
   }
 
   return null;
@@ -334,8 +334,8 @@ async function sendMessage() {
     if (furnitureKeyword) {
       if (brands.length > 0) {
         showTyping();
-        const brandImagePromises = brands.map(brand =>
-          searchFurnitureImage(`${brand} ${furnitureKeyword} India product`)
+        const brandImagePromises = defaultBrands.map(brand =>
+          searchFurnitureImage(`${brand} ${furnitureKeyword} white beige minimal`)
         );
         const brandResults = await Promise.all(brandImagePromises);
         removeTyping();
@@ -363,7 +363,7 @@ async function sendMessage() {
         const defaultBrands = ['Wakefit', 'Pepperfry', 'Urban Ladder'];
         showTyping();
         const brandImagePromises = defaultBrands.map(brand =>
-          searchFurnitureImage(`${brand} ${furnitureKeyword}`)
+          searchFurnitureImage(`${brand} ${furnitureKeyword} white beige minimal`)
         );
         const brandResults = await Promise.all(brandImagePromises);
         removeTyping();
