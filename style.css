@@ -464,6 +464,15 @@ body {
   flex-shrink: 0;
   transition: background 0.2s, transform 0.1s;
 }
-
+.brand-tag {
+  background: var(--gold);
+  color: var(--sidebar-bg);
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 8px;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.5px;
+}
 .send-btn:hover { background: var(--gold-dark); transform: scale(1.05); }
 .send-btn:active { transform: scale(0.95); }

@@ -143,12 +143,65 @@ function showFurnitureImages(images, query) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+function showBrandImages(brandImages, furnitureType) {
+  const messages = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+
+  let imagesHTML = brandImages.map(img => `
+    <div class="furniture-img-card">
+      <div class="brand-tag">${img.brandName}</div>
+      <img src="${img.thumb}" alt="${img.brandName} ${furnitureType}"
+           onclick="window.open('${img.link}', '_blank')"
+           title="Click to view full size" />
+      <div class="furniture-img-label">📷 ${img.photographer}</div>
+    </div>
+  `).join('');
+
+  div.innerHTML = `
+    <div class="avatar ai">F</div>
+    <div class="bubble">
+      <div class="bubble-inner">
+        <p style="color:var(--text-light); font-size:13px; margin-bottom:8px;">
+          🏷️ Here's how these brands' <strong>${furnitureType}</strong> looks:
+        </p>
+        <div class="furniture-images-grid">${imagesHTML}</div>
+        <p style="font-size:11px; color:var(--text-light); margin-top:6px;">
+          Click any image to view full size
+        </p>
+      </div>
+    </div>
+  `;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function extractBrandsFromReply(aiReply) {
+  const indianBrands = [
+    'Wakefit', 'Pepperfry', 'Urban Ladder', 'Nilkamal',
+    'Durian', 'Godrej Interio', 'Hometown', 'IKEA',
+    'Wooden Street', 'FabIndia', 'HomeTown', 'Damro',
+    '@home', 'Zuari', 'Featherlite'
+  ];
+
+  const foundBrands = [];
+  const replyLower = aiReply.toLowerCase();
+
+  for (const brand of indianBrands) {
+    if (replyLower.includes(brand.toLowerCase())) {
+      foundBrands.push(brand);
+    }
+  }
+
+  return foundBrands.slice(0, 3);
+}
+
 function extractFurnitureKeyword(userText, aiReply) {
   const furnitureWords = [
     'study table', 'dining table', 'coffee table', 'side table',
     'tv unit', 'dining chair', 'armchair', 'rocking chair',
     'bunk bed', 'king bed', 'queen bed', 'single bed', 'double bed',
-    'sofa', 'couch', 'bed', 'chair', 'table', 'wardrobe',
+    'sofa', 'couch', 'bed', 'chair', 'table', 'wardrobe', 'almirah',
     'shelf', 'desk', 'lamp', 'rug', 'cabinet',
     'bookshelf', 'dresser', 'ottoman', 'sectional'
   ];
@@ -164,7 +217,9 @@ function extractFurnitureKeyword(userText, aiReply) {
     'scandinavian', 'industrial', 'luxury', 'vintage', 'rustic'
   ];
 
-  const sizeWords = ['large', 'big', 'small', 'compact', 'queen', 'king', 'single'];
+  const sizeWords = [
+    'large', 'big', 'small', 'compact', 'queen', 'king', 'single'
+  ];
 
   const userLower = userText.toLowerCase();
   const aiLower = aiReply.toLowerCase();
@@ -200,10 +255,11 @@ function extractFurnitureKeyword(userText, aiReply) {
   }
 
   if (foundFurniture) {
-    if (foundColor) return `${foundColor} colored ${foundFurniture} furniture room interior`;
-    else if (foundStyle) return `${foundStyle} ${foundSize} ${foundFurniture} furniture interior`.trim();
-    else return `${foundSize} ${foundFurniture} furniture interior design`.trim();
+    if (foundColor) return `${foundColor} ${foundFurniture} furniture product`;
+    else if (foundStyle) return `${foundStyle} ${foundFurniture} furniture product`;
+    else return `${foundSize} ${foundFurniture} furniture product`.trim();
   }
+
   return null;
 }
 
@@ -269,11 +325,35 @@ async function sendMessage() {
     speakText(reply);
     chatHistory.push({ role: "assistant", content: reply });
 
-    const furnitureKeywords = extractFurnitureKeyword(userText, reply);
-    if (furnitureKeywords) {
-      const images = await searchFurnitureImage(furnitureKeywords);
+    const brands = extractBrandsFromReply(reply);
+    const furnitureKeyword = extractFurnitureKeyword(userText, reply);
+
+    if (brands.length > 0 && furnitureKeyword) {
+      showTyping();
+      const brandImagePromises = brands.map(brand =>
+        searchFurnitureImage(`${brand} ${furnitureKeyword} India product`)
+      );
+      const brandResults = await Promise.all(brandImagePromises);
+      removeTyping();
+
+      const brandImages = [];
+      brandResults.forEach((result, index) => {
+        if (result && result.length > 0) {
+          brandImages.push({
+            ...result[0],
+            brandName: brands[index]
+          });
+        }
+      });
+
+      if (brandImages.length > 0) {
+        showBrandImages(brandImages, furnitureKeyword);
+      }
+
+    } else if (furnitureKeyword) {
+      const images = await searchFurnitureImage(furnitureKeyword);
       if (images && images.length > 0) {
-        showFurnitureImages(images, furnitureKeywords);
+        showFurnitureImages(images, furnitureKeyword);
       }
     }
 
