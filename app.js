@@ -115,7 +115,7 @@ function showFurnitureImages(images, query) {
   const messages = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'msg ai';
-  const cleanQuery = query.replace('furniture interior design', '').trim();
+  const cleanQuery = query.replace('furniture', '').trim();
   let imagesHTML = images.slice(0, 3).map(img => `
     <div class="furniture-img-card">
       <img src="${img.thumb}" alt="${img.alt}"
@@ -255,9 +255,9 @@ function extractFurnitureKeyword(userText, aiReply) {
   }
 
   if (foundFurniture) {
-    if (foundColor) return `${foundColor} ${foundFurniture} furniture product`;
-    else if (foundStyle) return `${foundStyle} ${foundFurniture} furniture product`;
-    else return `${foundSize} ${foundFurniture} beige white grey furniture product`.trim();
+    if (foundColor) return `${foundColor} ${foundFurniture}`;
+    else if (foundStyle) return `${foundStyle} ${foundSize} ${foundFurniture}`.trim();
+    else return `${foundSize} ${foundFurniture}`.trim();
   }
 
   return null;
@@ -337,7 +337,7 @@ async function sendMessage() {
       showTyping();
 
       const brandImagePromises = brandsToUse.map(brand =>
-        searchFurnitureImage(`${brand} ${furnitureKeyword} white beige minimal`)
+        searchFurnitureImage(`${brand} ${furnitureKeyword}`)
       );
       const brandResults = await Promise.all(brandImagePromises);
       removeTyping();
@@ -355,9 +355,7 @@ async function sendMessage() {
       if (brandImages.length > 0) {
         showBrandImages(brandImages, furnitureKeyword);
       } else {
-        const fallbackImages = await searchFurnitureImage(
-          `${furnitureKeyword} beige white minimal furniture`
-        );
+        const fallbackImages = await searchFurnitureImage(`${furnitureKeyword} furniture`);
         if (fallbackImages && fallbackImages.length > 0) {
           showFurnitureImages(fallbackImages, furnitureKeyword);
         }
