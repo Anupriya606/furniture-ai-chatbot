@@ -327,67 +327,43 @@ async function sendMessage() {
 
     const brands = extractBrandsFromReply(reply);
     const furnitureKeyword = extractFurnitureKeyword(userText, reply);
+    const defaultBrands = ['Wakefit', 'Pepperfry', 'Urban Ladder'];
 
     console.log("Brands found:", brands);
     console.log("Furniture keyword:", furnitureKeyword);
 
     if (furnitureKeyword) {
-      if (brands.length > 0) {
-        showTyping();
-        const brandImagePromises = defaultBrands.map(brand =>
-          searchFurnitureImage(`${brand} ${furnitureKeyword} white beige minimal`)
-        );
-        const brandResults = await Promise.all(brandImagePromises);
-        removeTyping();
+      const brandsToUse = brands.length > 0 ? brands : defaultBrands;
+      showTyping();
 
-        const brandImages = [];
-        brandResults.forEach((result, index) => {
-          if (result && result.length > 0) {
-            brandImages.push({
-              ...result[0],
-              brandName: brands[index]
-            });
-          }
-        });
+      const brandImagePromises = brandsToUse.map(brand =>
+        searchFurnitureImage(`${brand} ${furnitureKeyword} white beige minimal`)
+      );
+      const brandResults = await Promise.all(brandImagePromises);
+      removeTyping();
 
-        if (brandImages.length > 0) {
-          showBrandImages(brandImages, furnitureKeyword);
-        } else {
-          const fallbackImages = await searchFurnitureImage(`${furnitureKeyword} India`);
-          if (fallbackImages && fallbackImages.length > 0) {
-            showFurnitureImages(fallbackImages, furnitureKeyword);
-          }
+      const brandImages = [];
+      brandResults.forEach((result, index) => {
+        if (result && result.length > 0) {
+          brandImages.push({
+            ...result[0],
+            brandName: brandsToUse[index]
+          });
         }
+      });
 
+      if (brandImages.length > 0) {
+        showBrandImages(brandImages, furnitureKeyword);
       } else {
-        const defaultBrands = ['Wakefit', 'Pepperfry', 'Urban Ladder'];
-        showTyping();
-        const brandImagePromises = defaultBrands.map(brand =>
-          searchFurnitureImage(`${brand} ${furnitureKeyword} white beige minimal`)
+        const fallbackImages = await searchFurnitureImage(
+          `${furnitureKeyword} beige white minimal furniture`
         );
-        const brandResults = await Promise.all(brandImagePromises);
-        removeTyping();
-
-        const brandImages = [];
-        brandResults.forEach((result, index) => {
-          if (result && result.length > 0) {
-            brandImages.push({
-              ...result[0],
-              brandName: defaultBrands[index]
-            });
-          }
-        });
-
-        if (brandImages.length > 0) {
-          showBrandImages(brandImages, furnitureKeyword);
-        } else {
-          const fallbackImages = await searchFurnitureImage(`${furnitureKeyword} furniture India`);
-          if (fallbackImages && fallbackImages.length > 0) {
-            showFurnitureImages(fallbackImages, furnitureKeyword);
-          }
+        if (fallbackImages && fallbackImages.length > 0) {
+          showFurnitureImages(fallbackImages, furnitureKeyword);
         }
       }
     }
+
   } catch (error) {
     removeTyping();
     addMessage("Connection failed: " + error.message, 'ai');
