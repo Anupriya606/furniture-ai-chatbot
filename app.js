@@ -90,85 +90,41 @@ function removeImage() {
 }
 
 async function searchFurnitureImage(query) {
-  try {
-    const response = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=3&orientation=landscape`,
-      { headers: { "Authorization": `Client-ID ${UNSPLASH_KEY}` } }
-    );
-    const data = await response.json();
-    if (data.results && data.results.length > 0) {
-      return data.results.map(img => ({
-        thumb: img.urls.small,
-        alt: img.alt_description || query,
-        photographer: img.user.name,
-        link: img.links.html
-      }));
-    }
-    return null;
-  } catch (error) {
-    console.error("Image search failed:", error);
-    return null;
-  }
+  return [{ isGoogle: true, query: query }];
 }
 
 function showFurnitureImages(images, query) {
-  const messages = document.getElementById('messages');
-  const div = document.createElement('div');
-  div.className = 'msg ai';
-  const cleanQuery = query.replace('furniture', '').trim();
-  let imagesHTML = images.slice(0, 3).map(img => `
-    <div class="furniture-img-card">
-      <img src="${img.thumb}" alt="${img.alt}"
-           onclick="window.open('${img.link}', '_blank')"
-           title="Click to view full size" />
-      <div class="furniture-img-label">📷 ${img.photographer}</div>
-    </div>
-  `).join('');
-
-  div.innerHTML = `
-    <div class="avatar ai">F</div>
-    <div class="bubble">
-      <div class="bubble-inner">
-        <p style="color:var(--text-light); font-size:13px; margin-bottom:8px;">
-          🖼️ Here are some <strong>${cleanQuery}</strong> ideas:
-        </p>
-        <div class="furniture-images-grid">${imagesHTML}</div>
-        <p style="font-size:11px; color:var(--text-light); margin-top:6px;">
-          Click any image to view full size
-        </p>
-      </div>
-    </div>
-  `;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+  showGoogleImages(query);
 }
 
 function showBrandImages(brandImages, furnitureType) {
+  const brandsUsed = brandImages.map(b => b.brandName).join(' OR ');
+  showGoogleImages(`${brandsUsed} ${furnitureType} India`);
+}
+function showGoogleImages(query) {
   const messages = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'msg ai';
 
-  let imagesHTML = brandImages.map(img => `
-    <div class="furniture-img-card">
-      <div class="brand-tag">${img.brandName}</div>
-      <img src="${img.thumb}" alt="${img.brandName} ${furnitureType}"
-           onclick="window.open('${img.link}', '_blank')"
-           title="Click to view full size" />
-      <div class="furniture-img-label">📷 ${img.photographer}</div>
-    </div>
-  `).join('');
+  const cleanQuery = encodeURIComponent(query + ' furniture India');
+  const googleSearchURL = `https://www.google.com/search?q=${cleanQuery}&tbm=isch&safe=active`;
 
   div.innerHTML = `
     <div class="avatar ai">F</div>
     <div class="bubble">
       <div class="bubble-inner">
-        <p style="color:var(--text-light); font-size:13px; margin-bottom:8px;">
-          🏷️ Here's how these brands' <strong>${furnitureType}</strong> looks:
+        <p style="color:var(--text-light); font-size:13px; margin-bottom:10px;">
+          🖼️ Here's how <strong>${query}</strong> looks — click to see more images:
         </p>
-        <div class="furniture-images-grid">${imagesHTML}</div>
-        <p style="font-size:11px; color:var(--text-light); margin-top:6px;">
-          Click any image to view full size
-        </p>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:8px;">
+          ${generateImageCards(query)}
+        </div>
+        <a href="${googleSearchURL}" target="_blank"
+           style="display:block; text-align:center; background:var(--gold); color:var(--sidebar-bg);
+                  padding:8px; border-radius:8px; font-size:13px; font-weight:bold;
+                  text-decoration:none; margin-top:6px;">
+          🔍 See More Images on Google
+        </a>
       </div>
     </div>
   `;
@@ -176,6 +132,34 @@ function showBrandImages(brandImages, furnitureType) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+function generateImageCards(query) {
+  const searches = [
+    `${query}`,
+    `${query} interior`,
+    `${query} room design`
+  ];
+
+  return searches.map(q => {
+    const encoded = encodeURIComponent(q + ' furniture India');
+    const googleURL = `https://www.google.com/search?q=${encoded}&tbm=isch&safe=active`;
+    const imageURL = `https://source.unsplash.com/300x200/?${encodeURIComponent(q)}`;
+
+    return `
+      <div class="furniture-img-card" onclick="window.open('${googleURL}', '_blank')"
+           style="cursor:pointer; position:relative;">
+        <img src="${imageURL}"
+             alt="${q}"
+             style="width:100%; height:100px; object-fit:cover; display:block;"
+             onerror="this.src='https://source.unsplash.com/300x200/?furniture,interior'" />
+        <div style="position:absolute; bottom:0; left:0; right:0;
+                    background:rgba(0,0,0,0.6); color:white;
+                    font-size:10px; padding:4px 6px; text-align:center;">
+          🔍 ${q}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 function extractBrandsFromReply(aiReply) {
   const indianBrands = [
     'Wakefit', 'Pepperfry', 'Urban Ladder', 'Nilkamal',
@@ -198,12 +182,12 @@ function extractBrandsFromReply(aiReply) {
 
 function extractFurnitureKeyword(userText, aiReply) {
   const furnitureWords = [
-    'study table', 'dining table', 'coffee table', 'side table',
+    'mirror', 'study table', 'dining table', 'coffee table', 'side table',
     'tv unit', 'dining chair', 'armchair', 'rocking chair',
     'bunk bed', 'king bed', 'queen bed', 'single bed', 'double bed',
     'sofa', 'couch', 'bed', 'chair', 'table', 'wardrobe', 'almirah',
-    'shelf', 'desk', 'lamp', 'rug', 'cabinet',
-    'bookshelf', 'dresser', 'ottoman', 'sectional'
+    'shelf', 'desk', 'lamp', 'rug', 'cabinet', 'curtain', 'cushion',
+    'bookshelf', 'dresser', 'ottoman', 'sectional', 'console'
   ];
 
   const colorWords = [
@@ -221,6 +205,11 @@ function extractFurnitureKeyword(userText, aiReply) {
     'large', 'big', 'small', 'compact', 'queen', 'king', 'single'
   ];
 
+  const roomColorWords = [
+    'black wall', 'white wall', 'grey wall', 'beige wall',
+    'dark room', 'light room', 'colorful room'
+  ];
+
   const userLower = userText.toLowerCase();
   const aiLower = aiReply.toLowerCase();
 
@@ -228,6 +217,7 @@ function extractFurnitureKeyword(userText, aiReply) {
   let foundColor = '';
   let foundStyle = '';
   let foundSize = '';
+  let foundRoomContext = '';
 
   for (const word of furnitureWords) {
     if (userLower.includes(word)) { foundFurniture = word; break; }
@@ -241,23 +231,28 @@ function extractFurnitureKeyword(userText, aiReply) {
   for (const word of colorWords) {
     if (userLower.includes(word)) { foundColor = word; break; }
   }
-  if (!foundColor) {
-    for (const word of colorWords) {
-      if (aiLower.includes(word)) { foundColor = word; break; }
-    }
-  }
 
   for (const word of styleWords) {
     if (userLower.includes(word)) { foundStyle = word; break; }
   }
+
   for (const word of sizeWords) {
     if (userLower.includes(word)) { foundSize = word; break; }
   }
 
+  for (const word of roomColorWords) {
+    if (userLower.includes(word)) { foundRoomContext = word; break; }
+  }
+
   if (foundFurniture) {
-    if (foundColor) return `${foundColor} ${foundFurniture}`;
-    else if (foundStyle) return `${foundStyle} ${foundSize} ${foundFurniture}`.trim();
-    else return `${foundSize} ${foundFurniture}`.trim();
+    const parts = [
+      foundColor,
+      foundSize,
+      foundStyle,
+      foundFurniture,
+      foundRoomContext ? `in ${foundRoomContext}` : ''
+    ].filter(Boolean);
+    return parts.join(' ');
   }
 
   return null;
@@ -325,9 +320,15 @@ async function sendMessage() {
     speakText(reply);
     chatHistory.push({ role: "assistant", content: reply });
 
-    const brands = extractBrandsFromReply(reply);
     const furnitureKeyword = extractFurnitureKeyword(userText, reply);
-    const defaultBrands = ['Wakefit', 'Pepperfry', 'Urban Ladder'];
+
+    if (furnitureKeyword) {
+      const brands = extractBrandsFromReply(reply);
+      const searchQuery = brands.length > 0
+        ? `${brands[0]} ${furnitureKeyword}`
+        : furnitureKeyword;
+      showGoogleImages(searchQuery);
+    }
 
     console.log("Brands found:", brands);
     console.log("Furniture keyword:", furnitureKeyword);
