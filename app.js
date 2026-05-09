@@ -476,3 +476,614 @@ function clearChat() {
   messages.innerHTML = '';
   addMessage("Hello again! Ask me anything about furniture!", 'ai');
 }
+// ============================================
+// ROOM VISUALIZER
+// ============================================
+
+let currentFloorColor = '#C8A882';
+
+function openVisualizer() {
+  const modal = document.getElementById('visualizerModal');
+  modal.style.display = 'flex';
+  setTimeout(() => drawRoom(), 100);
+}
+
+function closeVisualizer() {
+  document.getElementById('visualizerModal').style.display = 'none';
+}
+
+function setFloor(color) {
+  currentFloorColor = color;
+  drawRoom();
+}
+
+function drawRoom() {
+  const canvas = document.getElementById('roomCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  const wallColor = document.getElementById('wallColor').value;
+  const furnitureType = document.getElementById('furnitureType').value;
+  const furnitureColor = document.getElementById('furnitureColor').value;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // BACKGROUND WALL
+  ctx.fillStyle = wallColor;
+  ctx.fillRect(0, 0, W, H);
+
+  // 3D PERSPECTIVE LINES
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 1;
+
+  // Floor
+  ctx.fillStyle = currentFloorColor;
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.62);
+  ctx.lineTo(W, H * 0.62);
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Floor lines for texture
+  ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const y = H * 0.62 + (H * 0.38 / 8) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 12; i++) {
+    const x = (W / 12) * i;
+    ctx.beginPath();
+    ctx.moveTo(x, H * 0.62);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+
+  // Wall corner lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.62);
+  ctx.lineTo(W, H * 0.62);
+  ctx.stroke();
+
+  // Left wall shadow
+  const leftGrad = ctx.createLinearGradient(0, 0, 80, 0);
+  leftGrad.addColorStop(0, 'rgba(0,0,0,0.1)');
+  leftGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = leftGrad;
+  ctx.fillRect(0, 0, 80, H * 0.62);
+
+  // Ceiling line
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 30);
+  ctx.lineTo(W, 30);
+  ctx.stroke();
+
+  // WINDOW on wall
+  drawWindow(ctx, W * 0.65, 60, 140, 110, wallColor);
+
+  // DRAW FURNITURE
+  drawFurniture(ctx, furnitureType, furnitureColor, W, H);
+
+  // BASEBOARD
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.fillRect(0, H * 0.62 - 8, W, 8);
+
+  // AMBIENT LIGHT from window
+  const lightGrad = ctx.createRadialGradient(W * 0.72, 60, 10, W * 0.72, 200, 280);
+  lightGrad.addColorStop(0, 'rgba(255,255,220,0.15)');
+  lightGrad.addColorStop(1, 'rgba(255,255,220,0)');
+  ctx.fillStyle = lightGrad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawWindow(ctx, x, y, w, h, wallColor) {
+  // Window frame
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(x - 5, y - 5, w + 10, h + 10);
+
+  // Window glass - sky gradient
+  const skyGrad = ctx.createLinearGradient(x, y, x, y + h);
+  skyGrad.addColorStop(0, '#87CEEB');
+  skyGrad.addColorStop(0.6, '#B0D9F0');
+  skyGrad.addColorStop(1, '#D4EEF7');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(x, y, w, h);
+
+  // Window dividers
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x + w/2, y);
+  ctx.lineTo(x + w/2, y + h);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y + h/2);
+  ctx.lineTo(x + w, y + h/2);
+  ctx.stroke();
+
+  // Window frame border
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x, y, w, h);
+
+  // Curtains
+  const curtainColor = wallColor === '#2C2C2C' ? '#8B7355' : '#D4B896';
+  ctx.fillStyle = curtainColor;
+  // Left curtain
+  ctx.beginPath();
+  ctx.moveTo(x - 20, y - 10);
+  ctx.lineTo(x + 25, y - 10);
+  ctx.lineTo(x + 15, y + h + 10);
+  ctx.lineTo(x - 20, y + h + 10);
+  ctx.closePath();
+  ctx.fill();
+  // Right curtain
+  ctx.beginPath();
+  ctx.moveTo(x + w + 20, y - 10);
+  ctx.lineTo(x + w - 25, y - 10);
+  ctx.lineTo(x + w - 15, y + h + 10);
+  ctx.lineTo(x + w + 20, y + h + 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Curtain rod
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x - 25, y - 10);
+  ctx.lineTo(x + w + 25, y - 10);
+  ctx.stroke();
+}
+
+function drawFurniture(ctx, type, color, W, H) {
+  const floorY = H * 0.62;
+
+  // Shadow under furniture
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath();
+  ctx.ellipse(W * 0.3, floorY - 2, 160, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (type === 'sofa') drawSofa(ctx, color, W, floorY);
+  else if (type === 'bed') drawBed(ctx, color, W, floorY);
+  else if (type === 'dining') drawDining(ctx, color, W, floorY);
+  else if (type === 'desk') drawDesk(ctx, color, W, floorY);
+  else if (type === 'wardrobe') drawWardrobe(ctx, color, W, floorY);
+  else if (type === 'tv') drawTVUnit(ctx, color, W, floorY);
+}
+
+function getDark(color) {
+  const r = parseInt(color.slice(1,3),16);
+  const g = parseInt(color.slice(3,5),16);
+  const b = parseInt(color.slice(5,7),16);
+  return `rgb(${Math.max(0,r-40)},${Math.max(0,g-40)},${Math.max(0,b-40)})`;
+}
+
+function getLight(color) {
+  const r = parseInt(color.slice(1,3),16);
+  const g = parseInt(color.slice(3,5),16);
+  const b = parseInt(color.slice(5,7),16);
+  return `rgb(${Math.min(255,r+40)},${Math.min(255,g+40)},${Math.min(255,b+40)})`;
+}
+
+function drawSofa(ctx, color, W, floorY) {
+  const x = W * 0.08;
+  const y = floorY - 115;
+  const w = W * 0.5;
+
+  // Back rest
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, 75, 8);
+  ctx.fill();
+
+  // Seat
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y + 65, w, 45, [0,0,8,8]);
+  ctx.fill();
+
+  // Seat cushions
+  ctx.fillStyle = getLight(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 68, w/2 - 14, 36, 6);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 + 6, y + 68, w/2 - 14, 36, 6);
+  ctx.fill();
+
+  // Back cushions
+  ctx.fillStyle = getLight(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 8, w/3 - 10, 52, 6);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w/3 + 4, y + 8, w/3 - 8, 52, 6);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + 2*w/3 + 2, y + 8, w/3 - 10, 52, 6);
+  ctx.fill();
+
+  // Armrests
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x - 18, y + 20, 22, 90, [8,0,0,8]);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w - 4, y + 20, 22, 90, [0,8,8,0]);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = '#5C3A1E';
+  [[x+10, floorY-12], [x+w-10, floorY-12], [x+30, floorY-12], [x+w-30, floorY-12]].forEach(([lx,ly]) => {
+    ctx.fillRect(lx, ly, 12, 12);
+  });
+
+  // Decorative pillow
+  ctx.fillStyle = '#D4A96A';
+  ctx.beginPath();
+  ctx.roundRect(x + w - 55, y + 12, 38, 48, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + w - 36, y + 12);
+  ctx.lineTo(x + w - 36, y + 60);
+  ctx.stroke();
+}
+
+function drawBed(ctx, color, W, floorY) {
+  const x = W * 0.06;
+  const y = floorY - 130;
+  const w = W * 0.52;
+
+  // Bed frame
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x, y + 30, w, 100, 6);
+  ctx.fill();
+
+  // Headboard
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, 50, [10,10,0,0]);
+  ctx.fill();
+  ctx.fillStyle = getLight(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 10, y + 8, w - 20, 32, 6);
+  ctx.fill();
+
+  // Mattress
+  ctx.fillStyle = '#F5F0EB';
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 35, w - 16, 85, 4);
+  ctx.fill();
+
+  // Pillow 1
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.roundRect(x + 15, y + 40, 80, 40, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 15, y + 40, 80, 40);
+
+  // Pillow 2
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 + 5, y + 40, 80, 40, 8);
+  ctx.fill();
+  ctx.strokeRect(x + w/2 + 5, y + 40, 80, 40);
+
+  // Blanket
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 85, w - 16, 35, [0,0,4,4]);
+  ctx.fill();
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 85, w - 16, 10, 0);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = '#5C3A1E';
+  [[x+15, floorY-14],[x+w-25, floorY-14]].forEach(([lx,ly]) => {
+    ctx.fillRect(lx, ly, 14, 14);
+  });
+
+  // Side table
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x + w + 12, y + 60, 50, 60, 4);
+  ctx.fill();
+  ctx.fillStyle = getLight(color);
+  ctx.fillRect(x + w + 12, y + 60, 50, 6);
+  // Lamp on table
+  ctx.fillStyle = '#D4A96A';
+  ctx.beginPath();
+  ctx.moveTo(x + w + 28, y + 30);
+  ctx.lineTo(x + w + 46, y + 60);
+  ctx.lineTo(x + w + 18, y + 60);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#8B6914';
+  ctx.fillRect(x + w + 35, y + 60, 4, 15);
+}
+
+function drawDining(ctx, color, W, floorY) {
+  const cx = W * 0.3;
+  const tableY = floorY - 90;
+  const tw = 200;
+  const th = 14;
+
+  // Table top
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(cx - tw/2, tableY, tw, th, 4);
+  ctx.fill();
+  ctx.fillStyle = getLight(color);
+  ctx.beginPath();
+  ctx.roundRect(cx - tw/2 + 4, tableY + 2, tw - 8, 4, 2);
+  ctx.fill();
+
+  // Table legs
+  ctx.fillStyle = getDark(color);
+  ctx.lineWidth = 10;
+  ctx.lineCap = 'round';
+  [[cx-tw/2+20, tableY+th, cx-tw/2+15, floorY],
+   [cx+tw/2-20, tableY+th, cx+tw/2-15, floorY],
+   [cx-tw/2+20, tableY+th, cx-tw/2+25, floorY-10],
+   [cx+tw/2-20, tableY+th, cx+tw/2-25, floorY-10]
+  ].forEach(([x1,y1,x2,y2]) => {
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+  });
+
+  // Chairs
+  [[cx - tw/2 - 45, tableY - 10], [cx + tw/2 + 20, tableY - 10],
+   [cx - 60, tableY - 10], [cx + 15, tableY - 10]].forEach(([cx2, cy2], i) => {
+    ctx.fillStyle = getDark(color);
+    ctx.beginPath();
+    ctx.roundRect(cx2, cy2, 40, 55, 4);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect(cx2 + 2, cy2 + 20, 36, 22, 4);
+    ctx.fill();
+  });
+
+  // Items on table
+  ctx.fillStyle = '#E8D5B0';
+  ctx.beginPath();
+  ctx.arc(cx, tableY - 4, 25, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#D4A96A';
+  ctx.beginPath();
+  ctx.arc(cx, tableY - 4, 18, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawDesk(ctx, color, W, floorY) {
+  const x = W * 0.07;
+  const y = floorY - 100;
+  const w = W * 0.42;
+
+  // Desk surface
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, 16, 4);
+  ctx.fill();
+  ctx.fillStyle = getLight(color);
+  ctx.fillRect(x + 6, y + 2, w - 12, 5);
+
+  // Drawer unit
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x + w - 70, y + 16, 65, 75, 4);
+  ctx.fill();
+  [0,1,2].forEach(i => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect(x + w - 66, y + 20 + i * 22, 57, 18, 3);
+    ctx.fill();
+    ctx.fillStyle = '#D4A96A';
+    ctx.beginPath();
+    ctx.arc(x + w - 37, y + 29 + i * 22, 4, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // Legs
+  ctx.fillStyle = getDark(color);
+  [[x + 10, y + 16], [x + w - 80, y + 16]].forEach(([lx, ly]) => {
+    ctx.fillRect(lx, ly, 12, floorY - ly);
+  });
+
+  // Monitor
+  ctx.fillStyle = '#1A1A1A';
+  ctx.beginPath();
+  ctx.roundRect(x + 30, y - 85, 120, 80, 6);
+  ctx.fill();
+  ctx.fillStyle = '#2196F3';
+  ctx.beginPath();
+  ctx.roundRect(x + 34, y - 81, 112, 72, 4);
+  ctx.fill();
+  ctx.fillStyle = '#333';
+  ctx.fillRect(x + 82, y - 5, 16, 18);
+  ctx.fillRect(x + 62, y + 13, 56, 5);
+
+  // Chair
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 60, y + 16, 80, 55, 6);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x + 63, y + 19, 74, 35, 4);
+  ctx.fill();
+  ctx.fillStyle = '#333';
+  ctx.fillRect(x + 92, y + 71, 14, 20);
+  ctx.beginPath();
+  ctx.arc(x + 99, y + 91, 18, 0, Math.PI*2);
+  ctx.fillStyle = '#444';
+  ctx.fill();
+}
+
+function drawWardrobe(ctx, color, W, floorY) {
+  const x = W * 0.08;
+  const y = floorY - 220;
+  const w = W * 0.38;
+  const h = 220;
+
+  // Main body
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 4);
+  ctx.fill();
+
+  // Doors
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x + 6, y + 6, w/2 - 10, h - 12, 3);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 + 4, y + 6, w/2 - 10, h - 12, 3);
+  ctx.fill();
+
+  // Door panels
+  ctx.fillStyle = getLight(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 12, y + 12, w/2 - 22, (h-24)/2 - 6, 3);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + 12, y + (h-24)/2 + 18, w/2 - 22, (h-24)/2 - 6, 3);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 + 10, y + 12, w/2 - 22, (h-24)/2 - 6, 3);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 + 10, y + (h-24)/2 + 18, w/2 - 22, (h-24)/2 - 6, 3);
+  ctx.fill();
+
+  // Handles
+  ctx.fillStyle = '#D4A96A';
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 - 18, y + h/2 - 20, 10, 40, 5);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w/2 + 8, y + h/2 - 20, 10, 40, 5);
+  ctx.fill();
+
+  // Top cornice
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x - 4, y - 10, w + 8, 14, [4,4,0,0]);
+  ctx.fill();
+}
+
+function drawTVUnit(ctx, color, W, floorY) {
+  const x = W * 0.05;
+  const y = floorY - 70;
+  const w = W * 0.52;
+
+  // Main unit
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, 65, 6);
+  ctx.fill();
+
+  // Compartments
+  ctx.fillStyle = getDark(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 8, y + 8, 80, 50, 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + w - 88, y + 8, 80, 50, 4);
+  ctx.fill();
+
+  // Middle open shelf
+  ctx.fillStyle = getLight(color);
+  ctx.beginPath();
+  ctx.roundRect(x + 96, y + 8, w - 200, 50, 4);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = getDark(color);
+  [[x+20, y+65],[x+w-32, y+65],[x+w/2-10, y+65]].forEach(([lx,ly]) => {
+    ctx.fillRect(lx, ly, 12, 14);
+  });
+
+  // TV
+  const tvX = x + w/2 - 120;
+  const tvY = y - 155;
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.roundRect(tvX, tvY, 240, 148, 8);
+  ctx.fill();
+  const screenGrad = ctx.createLinearGradient(tvX+6, tvY+6, tvX+6, tvY+136);
+  screenGrad.addColorStop(0, '#1a1a2e');
+  screenGrad.addColorStop(0.5, '#16213e');
+  screenGrad.addColorStop(1, '#0f3460');
+  ctx.fillStyle = screenGrad;
+  ctx.beginPath();
+  ctx.roundRect(tvX+6, tvY+6, 228, 134, 4);
+  ctx.fill();
+
+  // Screen content
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(tvX+10, tvY+10, 80, 50);
+  ctx.fillRect(tvX+100, tvY+10, 130, 50);
+  ctx.fillRect(tvX+10, tvY+70, 210, 65);
+
+  // TV stand
+  ctx.fillStyle = '#333';
+  ctx.fillRect(tvX+108, tvY+148, 24, 14);
+  ctx.fillRect(tvX+88, tvY+160, 64, 6);
+
+  // Decorative items on unit
+  ctx.fillStyle = '#4CAF50';
+  ctx.beginPath();
+  ctx.arc(x + 48, y - 15, 15, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#388E3C';
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.ellipse(x + 48, y - 20 + i*8, 12 - i*1.5, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#8B6914';
+  ctx.fillRect(x + 45, y - 2, 6, 20);
+}
+
+function downloadRoom() {
+  const canvas = document.getElementById('roomCanvas');
+  const link = document.createElement('a');
+  link.download = 'FurniAI-Room-Design.png';
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+function askAIAboutRoom() {
+  const wallColor = document.getElementById('wallColor').options[document.getElementById('wallColor').selectedIndex].text;
+  const furnitureType = document.getElementById('furnitureType').value;
+  const furnitureColor = document.getElementById('furnitureColor').options[document.getElementById('furnitureColor').selectedIndex].text;
+
+  closeVisualizer();
+
+  const question = `I have a room with ${wallColor} walls and I'm planning to add a ${furnitureColor} ${furnitureType}. Does this combination look good? What other furniture or decor would complement this setup?`;
+
+  document.getElementById('userInput').value = question;
+  sendMessage();
+}
