@@ -321,46 +321,12 @@ async function sendMessage() {
     chatHistory.push({ role: "assistant", content: reply });
 
     const furnitureKeyword = extractFurnitureKeyword(userText, reply);
-
     if (furnitureKeyword) {
       const brands = extractBrandsFromReply(reply);
       const searchQuery = brands.length > 0
         ? `${brands[0]} ${furnitureKeyword}`
         : furnitureKeyword;
       showGoogleImages(searchQuery);
-    }
-
-    console.log("Brands found:", brands);
-    console.log("Furniture keyword:", furnitureKeyword);
-
-    if (furnitureKeyword) {
-      const brandsToUse = brands.length > 0 ? brands : defaultBrands;
-      showTyping();
-
-      const brandImagePromises = brandsToUse.map(brand =>
-        searchFurnitureImage(`${brand} ${furnitureKeyword}`)
-      );
-      const brandResults = await Promise.all(brandImagePromises);
-      removeTyping();
-
-      const brandImages = [];
-      brandResults.forEach((result, index) => {
-        if (result && result.length > 0) {
-          brandImages.push({
-            ...result[0],
-            brandName: brandsToUse[index]
-          });
-        }
-      });
-
-      if (brandImages.length > 0) {
-        showBrandImages(brandImages, furnitureKeyword);
-      } else {
-        const fallbackImages = await searchFurnitureImage(`${furnitureKeyword} furniture`);
-        if (fallbackImages && fallbackImages.length > 0) {
-          showFurnitureImages(fallbackImages, furnitureKeyword);
-        }
-      }
     }
 
   } catch (error) {
