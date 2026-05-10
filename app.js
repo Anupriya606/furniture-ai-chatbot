@@ -14,6 +14,7 @@ const languageNames = {
   en: 'English', hi: 'हिंदी', mr: 'मराठी',
   gu: 'ગુજરાતી', ta: 'தமிழ்', te: 'తెలుగు'
 };
+
 const brandLinks = {
   'Wakefit': 'https://www.wakefit.co/furniture',
   'Pepperfry': 'https://www.pepperfry.com',
@@ -160,10 +161,9 @@ function generateImageCards(query) {
   return searches.map((q, index) => {
     const encoded = encodeURIComponent(q + ' furniture India');
     const googleURL = `https://www.google.com/search?q=${encoded}&tbm=isch&safe=active`;
-    
     const placeholderColors = ['#F5ECD8', '#EDE0CC', '#E8D5B0'];
     const icons = ['🛋️', '🏠', '✨'];
-    
+
     return `
       <div class="furniture-img-card" onclick="window.open('${googleURL}', '_blank')"
            style="cursor:pointer; position:relative; background:${placeholderColors[index]};
@@ -182,7 +182,27 @@ function generateImageCards(query) {
       </div>
     `;
   }).join('');
+}
 
+function generateBrandButtons() {
+  const topBrands = [
+    { name: 'Wakefit', url: brandLinks['Wakefit'] },
+    { name: 'Pepperfry', url: brandLinks['Pepperfry'] },
+    { name: 'Urban Ladder', url: brandLinks['Urban Ladder'] },
+    { name: 'Nilkamal', url: brandLinks['Nilkamal'] },
+    { name: 'IKEA', url: brandLinks['IKEA'] },
+    { name: 'Durian', url: brandLinks['Durian'] },
+  ];
+
+  return topBrands.map(brand => `
+    <a href="${brand.url}" target="_blank"
+       style="background:var(--bubble-ai); border:1px solid var(--gold);
+              color:var(--gold); font-size:11px; padding:4px 10px;
+              border-radius:20px; text-decoration:none; font-weight:500;
+              font-family:'DM Sans',sans-serif;">
+      🛒 ${brand.name}
+    </a>
+  `).join('');
 }
 
 function extractBrandsFromReply(aiReply) {
@@ -204,26 +224,7 @@ function extractBrandsFromReply(aiReply) {
 
   return foundBrands.slice(0, 3);
 }
-function generateBrandButtons() {
-  const topBrands = [
-    { name: 'Wakefit', url: brandLinks['Wakefit'] },
-    { name: 'Pepperfry', url: brandLinks['Pepperfry'] },
-    { name: 'Urban Ladder', url: brandLinks['Urban Ladder'] },
-    { name: 'Nilkamal', url: brandLinks['Nilkamal'] },
-    { name: 'IKEA', url: brandLinks['IKEA'] },
-    { name: 'Durian', url: brandLinks['Durian'] },
-  ];
 
-  return topBrands.map(brand => `
-    <a href="${brand.url}" target="_blank"
-       style="background:var(--bubble-ai); border:1px solid var(--gold);
-              color:var(--gold); font-size:11px; padding:4px 10px;
-              border-radius:20px; text-decoration:none; font-weight:500;
-              font-family:'DM Sans',sans-serif;">
-      🛒 ${brand.name}
-    </a>
-  `).join('');
-}
 function extractFurnitureKeyword(userText, aiReply) {
   const furnitureWords = [
     'mirror', 'study table', 'dining table', 'coffee table', 'side table',
@@ -358,34 +359,39 @@ async function sendMessage() {
       return;
     }
 
-    let reply = data.choices[0].message.content;
-    reply = reply.replace(/<a\s[^>]*>.*?<\/a>/gi, (match) => {
-      const textMatch = match.match(/>([^<]+)</);
-      return textMatch ? textMatch[1] : '';
-    });
-    reply = reply.replace(/style="[^"]*"/gi, '');
-    reply = reply.replace(/title="[^"]*"/gi, '');
+    const reply = data.choices[0].message.content;
     removeTyping();
     addMessage(reply, 'ai');
     speakText(reply);
     chatHistory.push({ role: "assistant", content: reply });
 
+    const replyLower = reply.toLowerCase();
     const furnitureKeyword = extractFurnitureKeyword(userText, reply);
-    const isAskingQuestion = reply.trim().endsWith('?') && reply.split('?').length <= 2;
-    const hasRecommendation = reply.toLowerCase().includes('recommend') ||
-      reply.toLowerCase().includes('suggest') ||
-      reply.toLowerCase().includes('go with') ||
-      reply.toLowerCase().includes('try ') ||
-      reply.toLowerCase().includes('₹') ||
-      reply.toLowerCase().includes('wakefit') ||
-      reply.toLowerCase().includes('pepperfry') ||
-      reply.toLowerCase().includes('urban ladder') ||
-      reply.toLowerCase().includes('nilkamal') ||
-      reply.toLowerCase().includes('durian') ||
-      reply.toLowerCase().includes('ikea') ||
-      reply.toLowerCase().includes('godrej');
 
-    if (furnitureKeyword && hasRecommendation && !isAskingQuestion) {
+    const hasRecommendation =
+      replyLower.includes('recommend') ||
+      replyLower.includes('suggest') ||
+      replyLower.includes('go with') ||
+      replyLower.includes('try ') ||
+      replyLower.includes('rs.') ||
+      replyLower.includes('rupee') ||
+      reply.includes('₹') ||
+      replyLower.includes('wakefit') ||
+      replyLower.includes('pepperfry') ||
+      replyLower.includes('urban ladder') ||
+      replyLower.includes('nilkamal') ||
+      replyLower.includes('durian') ||
+      replyLower.includes('ikea') ||
+      replyLower.includes('godrej') ||
+      replyLower.includes('seater') ||
+      replyLower.includes('fits') ||
+      replyLower.includes('perfect');
+
+    const onlyQuestion = !hasRecommendation &&
+      reply.trim().endsWith('?') &&
+      reply.split('?').length <= 2;
+
+    if (furnitureKeyword && !onlyQuestion) {
       const brands = extractBrandsFromReply(reply);
       const searchQuery = brands.length > 0
         ? `${brands[0]} ${furnitureKeyword}`
@@ -506,6 +512,7 @@ function clearChat() {
   messages.innerHTML = '';
   addMessage("Hello again! Ask me anything about furniture!", 'ai');
 }
+
 // ============================================
 // ROOM VISUALIZER
 // ============================================
@@ -539,16 +546,9 @@ function drawRoom() {
   const furnitureColor = document.getElementById('furnitureColor').value;
 
   ctx.clearRect(0, 0, W, H);
-
-  // BACKGROUND WALL
   ctx.fillStyle = wallColor;
   ctx.fillRect(0, 0, W, H);
 
-  // 3D PERSPECTIVE LINES
-  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-  ctx.lineWidth = 1;
-
-  // Floor
   ctx.fillStyle = currentFloorColor;
   ctx.beginPath();
   ctx.moveTo(0, H * 0.62);
@@ -558,7 +558,6 @@ function drawRoom() {
   ctx.closePath();
   ctx.fill();
 
-  // Floor lines for texture
   ctx.strokeStyle = 'rgba(0,0,0,0.07)';
   ctx.lineWidth = 1;
   for (let i = 0; i < 8; i++) {
@@ -576,7 +575,6 @@ function drawRoom() {
     ctx.stroke();
   }
 
-  // Wall corner lines
   ctx.strokeStyle = 'rgba(0,0,0,0.1)';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -584,14 +582,12 @@ function drawRoom() {
   ctx.lineTo(W, H * 0.62);
   ctx.stroke();
 
-  // Left wall shadow
   const leftGrad = ctx.createLinearGradient(0, 0, 80, 0);
   leftGrad.addColorStop(0, 'rgba(0,0,0,0.1)');
   leftGrad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = leftGrad;
   ctx.fillRect(0, 0, 80, H * 0.62);
 
-  // Ceiling line
   ctx.strokeStyle = 'rgba(0,0,0,0.08)';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -599,17 +595,12 @@ function drawRoom() {
   ctx.lineTo(W, 30);
   ctx.stroke();
 
-  // WINDOW on wall
   drawWindow(ctx, W * 0.65, 60, 140, 110, wallColor);
-
-  // DRAW FURNITURE
   drawFurniture(ctx, furnitureType, furnitureColor, W, H);
 
-  // BASEBOARD
   ctx.fillStyle = 'rgba(0,0,0,0.06)';
   ctx.fillRect(0, H * 0.62 - 8, W, 8);
 
-  // AMBIENT LIGHT from window
   const lightGrad = ctx.createRadialGradient(W * 0.72, 60, 10, W * 0.72, 200, 280);
   lightGrad.addColorStop(0, 'rgba(255,255,220,0.15)');
   lightGrad.addColorStop(1, 'rgba(255,255,220,0)');
@@ -618,11 +609,9 @@ function drawRoom() {
 }
 
 function drawWindow(ctx, x, y, w, h, wallColor) {
-  // Window frame
   ctx.fillStyle = 'rgba(0,0,0,0.15)';
   ctx.fillRect(x - 5, y - 5, w + 10, h + 10);
 
-  // Window glass - sky gradient
   const skyGrad = ctx.createLinearGradient(x, y, x, y + h);
   skyGrad.addColorStop(0, '#87CEEB');
   skyGrad.addColorStop(0.6, '#B0D9F0');
@@ -630,7 +619,6 @@ function drawWindow(ctx, x, y, w, h, wallColor) {
   ctx.fillStyle = skyGrad;
   ctx.fillRect(x, y, w, h);
 
-  // Window dividers
   ctx.strokeStyle = 'rgba(255,255,255,0.8)';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -642,15 +630,12 @@ function drawWindow(ctx, x, y, w, h, wallColor) {
   ctx.lineTo(x + w, y + h/2);
   ctx.stroke();
 
-  // Window frame border
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 4;
   ctx.strokeRect(x, y, w, h);
 
-  // Curtains
   const curtainColor = wallColor === '#2C2C2C' ? '#8B7355' : '#D4B896';
   ctx.fillStyle = curtainColor;
-  // Left curtain
   ctx.beginPath();
   ctx.moveTo(x - 20, y - 10);
   ctx.lineTo(x + 25, y - 10);
@@ -658,7 +643,6 @@ function drawWindow(ctx, x, y, w, h, wallColor) {
   ctx.lineTo(x - 20, y + h + 10);
   ctx.closePath();
   ctx.fill();
-  // Right curtain
   ctx.beginPath();
   ctx.moveTo(x + w + 20, y - 10);
   ctx.lineTo(x + w - 25, y - 10);
@@ -667,7 +651,6 @@ function drawWindow(ctx, x, y, w, h, wallColor) {
   ctx.closePath();
   ctx.fill();
 
-  // Curtain rod
   ctx.strokeStyle = '#8B6914';
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -678,8 +661,6 @@ function drawWindow(ctx, x, y, w, h, wallColor) {
 
 function drawFurniture(ctx, type, color, W, H) {
   const floorY = H * 0.62;
-
-  // Shadow under furniture
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
   ctx.beginPath();
   ctx.ellipse(W * 0.3, floorY - 2, 160, 12, 0, 0, Math.PI * 2);
@@ -712,19 +693,16 @@ function drawSofa(ctx, color, W, floorY) {
   const y = floorY - 115;
   const w = W * 0.5;
 
-  // Back rest
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x, y, w, 75, 8);
   ctx.fill();
 
-  // Seat
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.roundRect(x, y + 65, w, 45, [0,0,8,8]);
   ctx.fill();
 
-  // Seat cushions
   ctx.fillStyle = getLight(color);
   ctx.beginPath();
   ctx.roundRect(x + 8, y + 68, w/2 - 14, 36, 6);
@@ -733,7 +711,6 @@ function drawSofa(ctx, color, W, floorY) {
   ctx.roundRect(x + w/2 + 6, y + 68, w/2 - 14, 36, 6);
   ctx.fill();
 
-  // Back cushions
   ctx.fillStyle = getLight(color);
   ctx.beginPath();
   ctx.roundRect(x + 8, y + 8, w/3 - 10, 52, 6);
@@ -745,7 +722,6 @@ function drawSofa(ctx, color, W, floorY) {
   ctx.roundRect(x + 2*w/3 + 2, y + 8, w/3 - 10, 52, 6);
   ctx.fill();
 
-  // Armrests
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x - 18, y + 20, 22, 90, [8,0,0,8]);
@@ -754,23 +730,15 @@ function drawSofa(ctx, color, W, floorY) {
   ctx.roundRect(x + w - 4, y + 20, 22, 90, [0,8,8,0]);
   ctx.fill();
 
-  // Legs
   ctx.fillStyle = '#5C3A1E';
   [[x+10, floorY-12], [x+w-10, floorY-12], [x+30, floorY-12], [x+w-30, floorY-12]].forEach(([lx,ly]) => {
     ctx.fillRect(lx, ly, 12, 12);
   });
 
-  // Decorative pillow
   ctx.fillStyle = '#D4A96A';
   ctx.beginPath();
   ctx.roundRect(x + w - 55, y + 12, 38, 48, 8);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x + w - 36, y + 12);
-  ctx.lineTo(x + w - 36, y + 60);
-  ctx.stroke();
 }
 
 function drawBed(ctx, color, W, floorY) {
@@ -778,13 +746,11 @@ function drawBed(ctx, color, W, floorY) {
   const y = floorY - 130;
   const w = W * 0.52;
 
-  // Bed frame
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x, y + 30, w, 100, 6);
   ctx.fill();
 
-  // Headboard
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x, y, w, 50, [10,10,0,0]);
@@ -794,52 +760,34 @@ function drawBed(ctx, color, W, floorY) {
   ctx.roundRect(x + 10, y + 8, w - 20, 32, 6);
   ctx.fill();
 
-  // Mattress
   ctx.fillStyle = '#F5F0EB';
   ctx.beginPath();
   ctx.roundRect(x + 8, y + 35, w - 16, 85, 4);
   ctx.fill();
 
-  // Pillow 1
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.roundRect(x + 15, y + 40, 80, 40, 8);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x + 15, y + 40, 80, 40);
-
-  // Pillow 2
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.roundRect(x + w/2 + 5, y + 40, 80, 40, 8);
   ctx.fill();
-  ctx.strokeRect(x + w/2 + 5, y + 40, 80, 40);
 
-  // Blanket
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.roundRect(x + 8, y + 85, w - 16, 35, [0,0,4,4]);
   ctx.fill();
-  ctx.fillStyle = getDark(color);
-  ctx.beginPath();
-  ctx.roundRect(x + 8, y + 85, w - 16, 10, 0);
-  ctx.fill();
 
-  // Legs
   ctx.fillStyle = '#5C3A1E';
   [[x+15, floorY-14],[x+w-25, floorY-14]].forEach(([lx,ly]) => {
     ctx.fillRect(lx, ly, 14, 14);
   });
 
-  // Side table
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x + w + 12, y + 60, 50, 60, 4);
   ctx.fill();
-  ctx.fillStyle = getLight(color);
-  ctx.fillRect(x + w + 12, y + 60, 50, 6);
-  // Lamp on table
   ctx.fillStyle = '#D4A96A';
   ctx.beginPath();
   ctx.moveTo(x + w + 28, y + 30);
@@ -847,8 +795,6 @@ function drawBed(ctx, color, W, floorY) {
   ctx.lineTo(x + w + 18, y + 60);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#8B6914';
-  ctx.fillRect(x + w + 35, y + 60, 4, 15);
 }
 
 function drawDining(ctx, color, W, floorY) {
@@ -857,24 +803,16 @@ function drawDining(ctx, color, W, floorY) {
   const tw = 200;
   const th = 14;
 
-  // Table top
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.roundRect(cx - tw/2, tableY, tw, th, 4);
   ctx.fill();
-  ctx.fillStyle = getLight(color);
-  ctx.beginPath();
-  ctx.roundRect(cx - tw/2 + 4, tableY + 2, tw - 8, 4, 2);
-  ctx.fill();
 
-  // Table legs
   ctx.fillStyle = getDark(color);
   ctx.lineWidth = 10;
   ctx.lineCap = 'round';
   [[cx-tw/2+20, tableY+th, cx-tw/2+15, floorY],
-   [cx+tw/2-20, tableY+th, cx+tw/2-15, floorY],
-   [cx-tw/2+20, tableY+th, cx-tw/2+25, floorY-10],
-   [cx+tw/2-20, tableY+th, cx+tw/2-25, floorY-10]
+   [cx+tw/2-20, tableY+th, cx+tw/2-15, floorY]
   ].forEach(([x1,y1,x2,y2]) => {
     ctx.beginPath();
     ctx.moveTo(x1,y1);
@@ -882,9 +820,8 @@ function drawDining(ctx, color, W, floorY) {
     ctx.stroke();
   });
 
-  // Chairs
   [[cx - tw/2 - 45, tableY - 10], [cx + tw/2 + 20, tableY - 10],
-   [cx - 60, tableY - 10], [cx + 15, tableY - 10]].forEach(([cx2, cy2], i) => {
+   [cx - 60, tableY - 10], [cx + 15, tableY - 10]].forEach(([cx2, cy2]) => {
     ctx.fillStyle = getDark(color);
     ctx.beginPath();
     ctx.roundRect(cx2, cy2, 40, 55, 4);
@@ -895,11 +832,6 @@ function drawDining(ctx, color, W, floorY) {
     ctx.fill();
   });
 
-  // Items on table
-  ctx.fillStyle = '#E8D5B0';
-  ctx.beginPath();
-  ctx.arc(cx, tableY - 4, 25, 0, Math.PI*2);
-  ctx.fill();
   ctx.fillStyle = '#D4A96A';
   ctx.beginPath();
   ctx.arc(cx, tableY - 4, 18, 0, Math.PI*2);
@@ -911,37 +843,21 @@ function drawDesk(ctx, color, W, floorY) {
   const y = floorY - 100;
   const w = W * 0.42;
 
-  // Desk surface
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.roundRect(x, y, w, 16, 4);
   ctx.fill();
-  ctx.fillStyle = getLight(color);
-  ctx.fillRect(x + 6, y + 2, w - 12, 5);
 
-  // Drawer unit
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x + w - 70, y + 16, 65, 75, 4);
   ctx.fill();
-  [0,1,2].forEach(i => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.roundRect(x + w - 66, y + 20 + i * 22, 57, 18, 3);
-    ctx.fill();
-    ctx.fillStyle = '#D4A96A';
-    ctx.beginPath();
-    ctx.arc(x + w - 37, y + 29 + i * 22, 4, 0, Math.PI*2);
-    ctx.fill();
-  });
 
-  // Legs
   ctx.fillStyle = getDark(color);
   [[x + 10, y + 16], [x + w - 80, y + 16]].forEach(([lx, ly]) => {
     ctx.fillRect(lx, ly, 12, floorY - ly);
   });
 
-  // Monitor
   ctx.fillStyle = '#1A1A1A';
   ctx.beginPath();
   ctx.roundRect(x + 30, y - 85, 120, 80, 6);
@@ -949,25 +865,6 @@ function drawDesk(ctx, color, W, floorY) {
   ctx.fillStyle = '#2196F3';
   ctx.beginPath();
   ctx.roundRect(x + 34, y - 81, 112, 72, 4);
-  ctx.fill();
-  ctx.fillStyle = '#333';
-  ctx.fillRect(x + 82, y - 5, 16, 18);
-  ctx.fillRect(x + 62, y + 13, 56, 5);
-
-  // Chair
-  ctx.fillStyle = getDark(color);
-  ctx.beginPath();
-  ctx.roundRect(x + 60, y + 16, 80, 55, 6);
-  ctx.fill();
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.roundRect(x + 63, y + 19, 74, 35, 4);
-  ctx.fill();
-  ctx.fillStyle = '#333';
-  ctx.fillRect(x + 92, y + 71, 14, 20);
-  ctx.beginPath();
-  ctx.arc(x + 99, y + 91, 18, 0, Math.PI*2);
-  ctx.fillStyle = '#444';
   ctx.fill();
 }
 
@@ -977,13 +874,11 @@ function drawWardrobe(ctx, color, W, floorY) {
   const w = W * 0.38;
   const h = 220;
 
-  // Main body
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 4);
   ctx.fill();
 
-  // Doors
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.roundRect(x + 6, y + 6, w/2 - 10, h - 12, 3);
@@ -992,34 +887,12 @@ function drawWardrobe(ctx, color, W, floorY) {
   ctx.roundRect(x + w/2 + 4, y + 6, w/2 - 10, h - 12, 3);
   ctx.fill();
 
-  // Door panels
-  ctx.fillStyle = getLight(color);
-  ctx.beginPath();
-  ctx.roundRect(x + 12, y + 12, w/2 - 22, (h-24)/2 - 6, 3);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(x + 12, y + (h-24)/2 + 18, w/2 - 22, (h-24)/2 - 6, 3);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(x + w/2 + 10, y + 12, w/2 - 22, (h-24)/2 - 6, 3);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(x + w/2 + 10, y + (h-24)/2 + 18, w/2 - 22, (h-24)/2 - 6, 3);
-  ctx.fill();
-
-  // Handles
   ctx.fillStyle = '#D4A96A';
   ctx.beginPath();
   ctx.roundRect(x + w/2 - 18, y + h/2 - 20, 10, 40, 5);
   ctx.fill();
   ctx.beginPath();
   ctx.roundRect(x + w/2 + 8, y + h/2 - 20, 10, 40, 5);
-  ctx.fill();
-
-  // Top cornice
-  ctx.fillStyle = getDark(color);
-  ctx.beginPath();
-  ctx.roundRect(x - 4, y - 10, w + 8, 14, [4,4,0,0]);
   ctx.fill();
 }
 
@@ -1028,13 +901,11 @@ function drawTVUnit(ctx, color, W, floorY) {
   const y = floorY - 70;
   const w = W * 0.52;
 
-  // Main unit
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.roundRect(x, y, w, 65, 6);
   ctx.fill();
 
-  // Compartments
   ctx.fillStyle = getDark(color);
   ctx.beginPath();
   ctx.roundRect(x + 8, y + 8, 80, 50, 4);
@@ -1043,19 +914,11 @@ function drawTVUnit(ctx, color, W, floorY) {
   ctx.roundRect(x + w - 88, y + 8, 80, 50, 4);
   ctx.fill();
 
-  // Middle open shelf
-  ctx.fillStyle = getLight(color);
-  ctx.beginPath();
-  ctx.roundRect(x + 96, y + 8, w - 200, 50, 4);
-  ctx.fill();
-
-  // Legs
   ctx.fillStyle = getDark(color);
   [[x+20, y+65],[x+w-32, y+65],[x+w/2-10, y+65]].forEach(([lx,ly]) => {
     ctx.fillRect(lx, ly, 12, 14);
   });
 
-  // TV
   const tvX = x + w/2 - 120;
   const tvY = y - 155;
   ctx.fillStyle = '#111';
@@ -1071,30 +934,9 @@ function drawTVUnit(ctx, color, W, floorY) {
   ctx.roundRect(tvX+6, tvY+6, 228, 134, 4);
   ctx.fill();
 
-  // Screen content
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  ctx.fillRect(tvX+10, tvY+10, 80, 50);
-  ctx.fillRect(tvX+100, tvY+10, 130, 50);
-  ctx.fillRect(tvX+10, tvY+70, 210, 65);
-
-  // TV stand
   ctx.fillStyle = '#333';
   ctx.fillRect(tvX+108, tvY+148, 24, 14);
   ctx.fillRect(tvX+88, tvY+160, 64, 6);
-
-  // Decorative items on unit
-  ctx.fillStyle = '#4CAF50';
-  ctx.beginPath();
-  ctx.arc(x + 48, y - 15, 15, 0, Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle = '#388E3C';
-  for (let i = 0; i < 5; i++) {
-    ctx.beginPath();
-    ctx.ellipse(x + 48, y - 20 + i*8, 12 - i*1.5, 6, 0, 0, Math.PI*2);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#8B6914';
-  ctx.fillRect(x + 45, y - 2, 6, 20);
 }
 
 function downloadRoom() {
@@ -1109,11 +951,8 @@ function askAIAboutRoom() {
   const wallColor = document.getElementById('wallColor').options[document.getElementById('wallColor').selectedIndex].text;
   const furnitureType = document.getElementById('furnitureType').value;
   const furnitureColor = document.getElementById('furnitureColor').options[document.getElementById('furnitureColor').selectedIndex].text;
-
   closeVisualizer();
-
   const question = `I have a room with ${wallColor} walls and I'm planning to add a ${furnitureColor} ${furnitureType}. Does this combination look good? What other furniture or decor would complement this setup?`;
-
   document.getElementById('userInput').value = question;
   sendMessage();
 }
