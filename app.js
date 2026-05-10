@@ -204,7 +204,26 @@ function extractBrandsFromReply(aiReply) {
 
   return foundBrands.slice(0, 3);
 }
+function generateBrandButtons() {
+  const topBrands = [
+    { name: 'Wakefit', url: brandLinks['Wakefit'] },
+    { name: 'Pepperfry', url: brandLinks['Pepperfry'] },
+    { name: 'Urban Ladder', url: brandLinks['Urban Ladder'] },
+    { name: 'Nilkamal', url: brandLinks['Nilkamal'] },
+    { name: 'IKEA', url: brandLinks['IKEA'] },
+    { name: 'Durian', url: brandLinks['Durian'] },
+  ];
 
+  return topBrands.map(brand => `
+    <a href="${brand.url}" target="_blank"
+       style="background:var(--bubble-ai); border:1px solid var(--gold);
+              color:var(--gold); font-size:11px; padding:4px 10px;
+              border-radius:20px; text-decoration:none; font-weight:500;
+              font-family:'DM Sans',sans-serif;">
+      🛒 ${brand.name}
+    </a>
+  `).join('');
+}
 function extractFurnitureKeyword(userText, aiReply) {
   const furnitureWords = [
     'mirror', 'study table', 'dining table', 'coffee table', 'side table',
