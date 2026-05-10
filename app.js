@@ -365,7 +365,21 @@ async function sendMessage() {
     chatHistory.push({ role: "assistant", content: reply });
 
     const furnitureKeyword = extractFurnitureKeyword(userText, reply);
-    if (furnitureKeyword) {
+    const isAskingQuestion = reply.trim().endsWith('?') && reply.split('?').length <= 2;
+    const hasRecommendation = reply.toLowerCase().includes('recommend') ||
+      reply.toLowerCase().includes('suggest') ||
+      reply.toLowerCase().includes('go with') ||
+      reply.toLowerCase().includes('try ') ||
+      reply.toLowerCase().includes('₹') ||
+      reply.toLowerCase().includes('wakefit') ||
+      reply.toLowerCase().includes('pepperfry') ||
+      reply.toLowerCase().includes('urban ladder') ||
+      reply.toLowerCase().includes('nilkamal') ||
+      reply.toLowerCase().includes('durian') ||
+      reply.toLowerCase().includes('ikea') ||
+      reply.toLowerCase().includes('godrej');
+
+    if (furnitureKeyword && hasRecommendation && !isAskingQuestion) {
       const brands = extractBrandsFromReply(reply);
       const searchQuery = brands.length > 0
         ? `${brands[0]} ${furnitureKeyword}`
