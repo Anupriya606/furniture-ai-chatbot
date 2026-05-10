@@ -14,7 +14,6 @@
     <div class="sidebar">
       <div class="sidebar-logo">🛋 FurniAI</div>
 
-      <!-- LANGUAGE SELECTOR -->
       <div class="sidebar-section">
         <div class="sidebar-label">🌍 LANGUAGE</div>
         <select id="languageSelect" class="selector" onchange="changeLanguage(this.value)">
@@ -27,7 +26,6 @@
         </select>
       </div>
 
-      <!-- ROOM TYPE SELECTOR -->
       <div class="sidebar-section">
         <div class="sidebar-label">🏠 ROOM TYPE</div>
         <select id="roomSelect" class="selector" onchange="changeRoom(this.value)">
@@ -42,7 +40,6 @@
         </select>
       </div>
 
-      <!-- DARK MODE -->
       <div class="sidebar-section">
         <div class="sidebar-label">🎨 THEME</div>
         <button class="theme-toggle" onclick="toggleTheme()">
@@ -51,7 +48,6 @@
         </button>
       </div>
 
-      <!-- TEXT TO SPEECH -->
       <div class="sidebar-section">
         <div class="sidebar-label">🔊 VOICE</div>
         <button class="theme-toggle" onclick="toggleTTS()">
@@ -60,7 +56,6 @@
         </button>
       </div>
 
-      <!-- ROOM VISUALIZER -->
       <div class="sidebar-section">
         <div class="sidebar-label">🏠 ROOM VISUALIZER</div>
         <button class="theme-toggle" onclick="openVisualizer()">
@@ -80,7 +75,6 @@
     <!-- MAIN CHAT AREA -->
     <div class="main">
 
-      <!-- TOP BAR -->
       <div class="topbar">
         <div class="topbar-icon">F</div>
         <div>
@@ -93,12 +87,11 @@
         </div>
       </div>
 
-      <!-- MESSAGES -->
       <div class="messages" id="messages">
         <div class="msg ai">
           <div class="avatar ai">F</div>
           <div class="bubble">
-            <div class="bubble-inner" id="welcomeMsg">
+            <div class="bubble-inner">
               Hello! I'm your personal Furniture Design Expert. I can help you with recommendations based on your room size and budget, cost estimates, and style advice. What are you looking to furnish today?
             </div>
             <div class="chips">
@@ -110,7 +103,6 @@
         </div>
       </div>
 
-      <!-- IMAGE PREVIEW -->
       <div id="imagePreview" style="display:none; padding: 8px 20px 0 20px;">
         <div style="position:relative; display:inline-block;">
           <img id="previewImg" style="height:80px; border-radius:8px; border:1px solid var(--gold);" />
@@ -118,7 +110,6 @@
         </div>
       </div>
 
-      <!-- INPUT BAR -->
       <div class="inputbar">
         <label for="imageInput" class="upload-btn" title="Upload room photo">
           <svg viewBox="0 0 24 24" fill="var(--gold)" width="20" height="20">
@@ -139,94 +130,89 @@
     </div>
   </div>
 
- <script>
-  const GROQ_KEY = "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";
-  const UNSPLASH_ACCESS_KEY = "3hwSCuLF4Lh_Swwd2sEtwQ-LnIlkwX_N-AY1jclaKH8";
-</script>
+  <!-- ROOM VISUALIZER MODAL -->
+  <div id="visualizerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; justify-content:center; align-items:center;">
+    <div style="background:var(--main-bg); border-radius:16px; padding:24px; width:680px; max-width:95vw; max-height:90vh; overflow-y:auto;">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="font-family:'Playfair Display',serif; color:var(--gold); font-size:20px;">🎨 Room Visualizer</h2>
+        <button onclick="closeVisualizer()" style="background:none; border:none; color:var(--text); font-size:20px; cursor:pointer;">✕</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div>
+          <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">WALL COLOR</label>
+          <select id="wallColor" onchange="drawRoom()" style="width:100%; background:var(--input-bg); border:1px solid var(--bubble-border); color:var(--text); border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px;">
+            <option value="#F5F0EB">Warm Cream</option>
+            <option value="#E8E8E8">Light Grey</option>
+            <option value="#FFFFFF">Pure White</option>
+            <option value="#D4E8D4">Sage Green</option>
+            <option value="#E8D4D4">Dusty Rose</option>
+            <option value="#D4D4E8">Lavender Blue</option>
+            <option value="#F0E6CC">Warm Yellow</option>
+            <option value="#2C2C2C">Charcoal Dark</option>
+            <option value="#8B7355">Warm Brown</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">FURNITURE TYPE</label>
+          <select id="furnitureType" onchange="drawRoom()" style="width:100%; background:var(--input-bg); border:1px solid var(--bubble-border); color:var(--text); border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px;">
+            <option value="sofa">Sofa</option>
+            <option value="bed">Bed</option>
+            <option value="dining">Dining Table</option>
+            <option value="desk">Study Desk</option>
+            <option value="wardrobe">Wardrobe</option>
+            <option value="tv">TV Unit</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">FURNITURE COLOR</label>
+          <select id="furnitureColor" onchange="drawRoom()" style="width:100%; background:var(--input-bg); border:1px solid var(--bubble-border); color:var(--text); border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px;">
+            <option value="#8B6914">Warm Wood</option>
+            <option value="#2C2C2C">Charcoal Black</option>
+            <option value="#FFFFFF">Pure White</option>
+            <option value="#4A6FA5">Navy Blue</option>
+            <option value="#8B4513">Rich Brown</option>
+            <option value="#6B8E6B">Forest Green</option>
+            <option value="#C0392B">Deep Red</option>
+            <option value="#7B68EE">Soft Purple</option>
+            <option value="#D4A96A">Golden Oak</option>
+            <option value="#708090">Steel Grey</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">FLOOR TYPE</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="setFloor('#C8A882')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#C8A882; color:white; font-size:12px; cursor:pointer;">Wood</button>
+          <button onclick="setFloor('#E0E0E0')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#E0E0E0; color:#333; font-size:12px; cursor:pointer;">Marble</button>
+          <button onclick="setFloor('#8B7355')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#8B7355; color:white; font-size:12px; cursor:pointer;">Dark Wood</button>
+          <button onclick="setFloor('#D2B48C')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#D2B48C; color:white; font-size:12px; cursor:pointer;">Tile</button>
+          <button onclick="setFloor('#4A4A4A')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#4A4A4A; color:white; font-size:12px; cursor:pointer;">Dark Tile</button>
+        </div>
+      </div>
+
+      <canvas id="roomCanvas" width="620" height="320" style="border-radius:12px; width:100%; border:1px solid var(--bubble-border);"></canvas>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button onclick="downloadRoom()" style="flex:1; background:var(--gold); border:none; color:var(--sidebar-bg); border-radius:10px; padding:10px; font-size:14px; font-weight:bold; cursor:pointer; font-family:'DM Sans',sans-serif;">⬇️ Download Image</button>
+        <button onclick="askAIAboutRoom()" style="flex:1; background:var(--sidebar-bg); border:1px solid var(--gold); color:var(--gold); border-radius:10px; padding:10px; font-size:14px; font-weight:bold; cursor:pointer; font-family:'DM Sans',sans-serif;">🤖 Ask AI About This Room</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPTS — ORDER MATTERS! -->
+  <script>
+    const GROQ_KEY = "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";
+    const UNSPLASH_ACCESS_KEY = "3hwSCuLF4Lh_Swwd2sEtwQ-LnIlkwX_N-AY1jclaKH8";
+  </script>
   <script src="prompts/system_prompt.js"></script>
   <script src="data/furniture_knowledge.js"></script>
-  <script src="app.js">
-
-  </script>
-  <!-- ROOM VISUALIZER MODAL -->
-<div id="visualizerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; justify-content:center; align-items:center;">
-  <div style="background:var(--main-bg); border-radius:16px; padding:24px; width:680px; max-width:95vw; max-height:90vh; overflow-y:auto;">
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2 style="font-family:'Playfair Display',serif; color:var(--gold); font-size:20px;">🎨 Room Visualizer</h2>
-      <button onclick="closeVisualizer()" style="background:none; border:none; color:var(--text); font-size:20px; cursor:pointer;">✕</button>
-    </div>
-
-    <!-- CONTROLS -->
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
-
-      <div>
-        <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">WALL COLOR</label>
-        <select id="wallColor" onchange="drawRoom()" style="width:100%; background:var(--input-bg); border:1px solid var(--bubble-border); color:var(--text); border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px;">
-          <option value="#F5F0EB">Warm Cream</option>
-          <option value="#E8E8E8">Light Grey</option>
-          <option value="#FFFFFF">Pure White</option>
-          <option value="#D4E8D4">Sage Green</option>
-          <option value="#E8D4D4">Dusty Rose</option>
-          <option value="#D4D4E8">Lavender Blue</option>
-          <option value="#F0E6CC">Warm Yellow</option>
-          <option value="#2C2C2C">Charcoal Dark</option>
-          <option value="#8B7355">Warm Brown</option>
-        </select>
-      </div>
-
-      <div>
-        <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">FURNITURE TYPE</label>
-        <select id="furnitureType" onchange="drawRoom()" style="width:100%; background:var(--input-bg); border:1px solid var(--bubble-border); color:var(--text); border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px;">
-          <option value="sofa">Sofa</option>
-          <option value="bed">Bed</option>
-          <option value="dining">Dining Table</option>
-          <option value="desk">Study Desk</option>
-          <option value="wardrobe">Wardrobe</option>
-          <option value="tv">TV Unit</option>
-        </select>
-      </div>
-
-      <div>
-        <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">FURNITURE COLOR</label>
-        <select id="furnitureColor" onchange="drawRoom()" style="width:100%; background:var(--input-bg); border:1px solid var(--bubble-border); color:var(--text); border-radius:8px; padding:8px; font-family:'DM Sans',sans-serif; font-size:13px;">
-          <option value="#8B6914">Warm Wood</option>
-          <option value="#2C2C2C">Charcoal Black</option>
-          <option value="#FFFFFF">Pure White</option>
-          <option value="#4A6FA5">Navy Blue</option>
-          <option value="#8B4513">Rich Brown</option>
-          <option value="#6B8E6B">Forest Green</option>
-          <option value="#C0392B">Deep Red</option>
-          <option value="#7B68EE">Soft Purple</option>
-          <option value="#D4A96A">Golden Oak</option>
-          <option value="#708090">Steel Grey</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- FLOOR COLOR -->
-    <div style="margin-bottom:16px;">
-      <label style="font-size:11px; color:var(--text-light); display:block; margin-bottom:6px;">FLOOR TYPE</label>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button onclick="setFloor('#C8A882')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#C8A882; color:white; font-size:12px; cursor:pointer;">Wood</button>
-        <button onclick="setFloor('#E0E0E0')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#E0E0E0; color:#333; font-size:12px; cursor:pointer;">Marble</button>
-        <button onclick="setFloor('#8B7355')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#8B7355; color:white; font-size:12px; cursor:pointer;">Dark Wood</button>
-        <button onclick="setFloor('#D2B48C')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#D2B48C; color:white; font-size:12px; cursor:pointer;">Tile</button>
-        <button onclick="setFloor('#4A4A4A')" style="padding:6px 14px; border-radius:20px; border:1px solid var(--bubble-border); background:#4A4A4A; color:white; font-size:12px; cursor:pointer;">Dark Tile</button>
-      </div>
-    </div>
-
-    <!-- CANVAS -->
-    <canvas id="roomCanvas" width="620" height="320" style="border-radius:12px; width:100%; border:1px solid var(--bubble-border);"></canvas>
-
-    <!-- BUTTONS -->
-    <div style="display:flex; gap:10px; margin-top:14px;">
-      <button onclick="downloadRoom()" style="flex:1; background:var(--gold); border:none; color:var(--sidebar-bg); border-radius:10px; padding:10px; font-size:14px; font-weight:bold; cursor:pointer; font-family:'DM Sans',sans-serif;">⬇️ Download Image</button>
-      <button onclick="askAIAboutRoom()" style="flex:1; background:var(--sidebar-bg); border:1px solid var(--gold); color:var(--gold); border-radius:10px; padding:10px; font-size:14px; font-weight:bold; cursor:pointer; font-family:'DM Sans',sans-serif;">🤖 Ask AI About This Room</button>
-    </div>
-
-  </div>
-</div>
+  <script src="app.js"></script>
 
 </body>
 </html>
