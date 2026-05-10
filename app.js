@@ -358,7 +358,13 @@ async function sendMessage() {
       return;
     }
 
-    const reply = data.choices[0].message.content;
+    let reply = data.choices[0].message.content;
+    reply = reply.replace(/<a\s[^>]*>.*?<\/a>/gi, (match) => {
+      const textMatch = match.match(/>([^<]+)</);
+      return textMatch ? textMatch[1] : '';
+    });
+    reply = reply.replace(/style="[^"]*"/gi, '');
+    reply = reply.replace(/title="[^"]*"/gi, '');
     removeTyping();
     addMessage(reply, 'ai');
     speakText(reply);
