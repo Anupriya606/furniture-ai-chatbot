@@ -134,32 +134,39 @@ function showGoogleImages(query) {
 
 function generateImageCards(query) {
   const searches = [
-    `${query}`,
+    query,
     `${query} interior`,
     `${query} room design`
   ];
 
-  return searches.map(q => {
+  return searches.map((q, index) => {
     const encoded = encodeURIComponent(q + ' furniture India');
     const googleURL = `https://www.google.com/search?q=${encoded}&tbm=isch&safe=active`;
-    const imageURL = `https://source.unsplash.com/300x200/?${encodeURIComponent(q)}`;
-
+    
+    const placeholderColors = ['#F5ECD8', '#EDE0CC', '#E8D5B0'];
+    const icons = ['🛋️', '🏠', '✨'];
+    
     return `
       <div class="furniture-img-card" onclick="window.open('${googleURL}', '_blank')"
-           style="cursor:pointer; position:relative;">
-        <img src="${imageURL}"
-             alt="${q}"
-             style="width:100%; height:100px; object-fit:cover; display:block;"
-             onerror="this.src='https://source.unsplash.com/300x200/?furniture,interior'" />
+           style="cursor:pointer; position:relative; background:${placeholderColors[index]};
+                  height:100px; display:flex; flex-direction:column;
+                  align-items:center; justify-content:center; border-radius:8px;">
+        <div style="font-size:32px; margin-bottom:6px;">${icons[index]}</div>
+        <div style="font-size:11px; color:#7A5C35; text-align:center; padding:0 8px; font-weight:500;">
+          ${q}
+        </div>
         <div style="position:absolute; bottom:0; left:0; right:0;
-                    background:rgba(0,0,0,0.6); color:white;
-                    font-size:10px; padding:4px 6px; text-align:center;">
-          🔍 ${q}
+                    background:rgba(59,42,26,0.75); color:#D4A96A;
+                    font-size:10px; padding:4px 6px; text-align:center;
+                    border-radius:0 0 8px 8px;">
+          🔍 Click to search Google Images
         </div>
       </div>
     `;
   }).join('');
+  
 }
+
 function extractBrandsFromReply(aiReply) {
   const indianBrands = [
     'Wakefit', 'Pepperfry', 'Urban Ladder', 'Nilkamal',
