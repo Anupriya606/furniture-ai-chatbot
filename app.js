@@ -14,6 +14,20 @@ const languageNames = {
   en: 'English', hi: 'हिंदी', mr: 'मराठी',
   gu: 'ગુજરાતી', ta: 'தமிழ்', te: 'తెలుగు'
 };
+const brandLinks = {
+  'Wakefit': 'https://www.wakefit.co/furniture',
+  'Pepperfry': 'https://www.pepperfry.com',
+  'Urban Ladder': 'https://www.urbanladder.com',
+  'Nilkamal': 'https://www.nilkamalfurniture.com',
+  'Durian': 'https://www.durian.in',
+  'Godrej Interio': 'https://www.godrejinterio.com',
+  'Hometown': 'https://www.hometown.in',
+  'IKEA': 'https://www.ikea.com/in/en',
+  'Wooden Street': 'https://www.woodenstreet.com',
+  'Damro': 'https://www.damro.com',
+  'Zuari': 'https://www.zuarifurniture.com',
+  'Featherlite': 'https://www.featherlite.in'
+};
 
 const roomEmojis = {
   'living room': '🛋', 'bedroom': '🛏', 'kitchen': '🍳',
@@ -101,6 +115,7 @@ function showBrandImages(brandImages, furnitureType) {
   const brandsUsed = brandImages.map(b => b.brandName).join(' OR ');
   showGoogleImages(`${brandsUsed} ${furnitureType} India`);
 }
+
 function showGoogleImages(query) {
   const messages = document.getElementById('messages');
   const div = document.createElement('div');
@@ -125,6 +140,9 @@ function showGoogleImages(query) {
                   text-decoration:none; margin-top:6px;">
           🔍 See More Images on Google
         </a>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+          ${generateBrandButtons()}
+        </div>
       </div>
     </div>
   `;
@@ -164,7 +182,7 @@ function generateImageCards(query) {
       </div>
     `;
   }).join('');
-  
+
 }
 
 function extractBrandsFromReply(aiReply) {
@@ -350,6 +368,16 @@ function sendChip(text) {
 
 function formatAIMessage(text) {
   let formatted = text;
+  Object.keys(brandLinks).forEach(brand => {
+    const regex = new RegExp(`\\b${brand}\\b`, 'g');
+    formatted = formatted.replace(regex,
+      `<a href="${brandLinks[brand]}" target="_blank"
+          style="color:var(--gold); font-weight:bold; text-decoration:none;
+                 border-bottom:1px solid var(--gold);"
+          title="Visit ${brand}">${brand} 🛒</a>`
+    );
+  });
+
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
   formatted = formatted.replace(
