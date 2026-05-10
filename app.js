@@ -401,16 +401,6 @@ function sendChip(text) {
 
 function formatAIMessage(text) {
   let formatted = text;
-  Object.keys(brandLinks).forEach(brand => {
-    const regex = new RegExp(`\\b${brand}\\b`, 'g');
-    formatted = formatted.replace(regex,
-      `<a href="${brandLinks[brand]}" target="_blank"
-          style="color:var(--gold); font-weight:bold; text-decoration:none;
-                 border-bottom:1px solid var(--gold);"
-          title="Visit ${brand}">${brand} 🛒</a>`
-    );
-  });
-
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
   formatted = formatted.replace(
