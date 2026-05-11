@@ -387,7 +387,25 @@ async function sendMessage() {
       replyLower.includes('fits') ||
       replyLower.includes('perfect');
 
+    const isStyleAdvice =
+      replyLower.includes('color palette') ||
+      replyLower.includes('colour palette') ||
+      replyLower.includes('style') ||
+      replyLower.includes('aesthetic') ||
+      replyLower.includes('modern') ||
+      replyLower.includes('minimal') ||
+      replyLower.includes('scandinavian') ||
+      replyLower.includes('bohemian') ||
+      replyLower.includes('industrial') ||
+      replyLower.includes('classic look') ||
+      replyLower.includes('interior') ||
+      replyLower.includes('decor') ||
+      replyLower.includes('warm tones') ||
+      replyLower.includes('cool tones') ||
+      replyLower.includes('neutral');
+
     const onlyQuestion = !hasRecommendation &&
+      !isStyleAdvice &&
       reply.trim().endsWith('?') &&
       reply.split('?').length <= 2;
 
@@ -397,6 +415,13 @@ async function sendMessage() {
         ? `${brands[0]} ${furnitureKeyword}`
         : furnitureKeyword;
       showGoogleImages(searchQuery);
+    } else if (isStyleAdvice && !furnitureKeyword) {
+      const styleQuery = userText.toLowerCase().includes('bedroom') ? 'modern bedroom interior design India' :
+                         userText.toLowerCase().includes('living') ? 'modern living room interior design India' :
+                         userText.toLowerCase().includes('kitchen') ? 'modern kitchen interior India' :
+                         userText.toLowerCase().includes('office') ? 'home office interior design India' :
+                         'modern interior design India furniture';
+      showGoogleImages(styleQuery);
     }
 
   } catch (error) {
