@@ -14,6 +14,170 @@ const languageNames = {
   en: 'English', hi: 'हिंदी', mr: 'मराठी',
   gu: 'ગુજરાતી', ta: 'தமிழ்', te: 'తెలుగు'
 };
+// ============================================
+// FURNITURE QUIZ
+// ============================================
+
+const quizQuestions = [
+  {
+    question: "Which room are you planning to furnish?",
+    options: ["🛋 Living Room", "🛏 Bedroom", "🍽 Dining Room", "💼 Home Office", "🍳 Kitchen", "🧸 Kids Room"]
+  },
+  {
+    question: "How big is your room approximately?",
+    options: ["📦 Small (under 100 sqft)", "🏠 Medium (100-150 sqft)", "🏡 Large (150-200 sqft)", "🏢 Extra Large (200+ sqft)"]
+  },
+  {
+    question: "What is your total budget for this room?",
+    options: ["💰 Under ₹20,000", "💰 ₹20,000 - ₹50,000", "💰 ₹50,000 - ₹1,00,000", "💰 Above ₹1,00,000"]
+  },
+  {
+    question: "Which style appeals to you most?",
+    options: ["✨ Modern & Minimal", "🌿 Bohemian & Earthy", "🏛 Classic & Elegant", "⚙️ Industrial & Raw", "🌸 Scandinavian & Cozy", "🎨 Colorful & Eclectic"]
+  },
+  {
+    question: "What matters most to you in this room?",
+    options: ["📦 Maximum Storage", "😴 Comfort & Relaxation", "✨ Aesthetics & Style", "💡 Multi-functional Space", "💰 Best Value for Money", "🌿 Eco-friendly Choices"]
+  }
+];
+
+let currentQuestion = 0;
+let quizAnswers = [];
+
+function startQuiz() {
+  currentQuestion = 0;
+  quizAnswers = [];
+  document.getElementById('quizModal').style.display = 'flex';
+  showQuestion(0);
+}
+
+function closeQuiz() {
+  document.getElementById('quizModal').style.display = 'none';
+}
+
+function showQuestion(index) {
+  const q = quizQuestions[index];
+  document.getElementById('quizStep').textContent = `Question ${index + 1} of ${quizQuestions.length}`;
+  document.getElementById('quizQuestion').textContent = q.question;
+  document.getElementById('quizProgress').style.width = `${(index / quizQuestions.length) * 100}%`;
+  document.getElementById('selectedAnswer').style.display = 'none';
+  document.getElementById('quizNextBtn').style.display = 'none';
+  document.getElementById('quizGenerateBtn').style.display = 'none';
+
+  const optionsDiv = document.getElementById('quizOptions');
+  optionsDiv.innerHTML = q.options.map((opt, i) => `
+    <button onclick="selectOption('${opt.replace(/'/g, "\\'")}', ${i})"
+      id="quizOpt${i}"
+      style="background:var(--bubble-ai); border:1px solid var(--bubble-border);
+             color:var(--text); border-radius:10px; padding:12px 10px;
+             font-size:13px; cursor:pointer; text-align:left;
+             font-family:'DM Sans',sans-serif; transition:all 0.2s;">
+      ${opt}
+    </button>
+  `).join('');
+}
+
+function selectOption(value, index) {
+  const allBtns = document.getElementById('quizOptions').querySelectorAll('button');
+  allBtns.forEach(btn => {
+    btn.style.background = 'var(--bubble-ai)';
+    btn.style.border = '1px solid var(--bubble-border)';
+    btn.style.color = 'var(--text)';
+  });
+
+  const selected = document.getElementById(`quizOpt${index}`);
+  selected.style.background = 'var(--gold)';
+  selected.style.border = '1px solid var(--gold)';
+  selected.style.color = 'var(--sidebar-bg)';
+
+  document.getElementById('selectedText').textContent = value;
+  document.getElementById('selectedAnswer').style.display = 'block';
+
+  quizAnswers[currentQuestion] = value;
+
+  if (currentQuestion < quizQuestions.length - 1) {
+    document.getElementById('quizNextBtn').style.display = 'block';
+  } else {
+    document.getElementById('quizGenerateBtn').style.display = 'block';
+  }
+}
+
+function nextQuestion() {
+  if (!quizAnswers[currentQuestion]) return;
+  currentQuestion++;
+  showQuestion(currentQuestion);
+}
+
+async function generateRoomPlan() {
+  if (!quizAnswers[currentQuestion]) return;
+
+  closeQuiz();
+
+  const [room, size, budget, style, priority] = quizAnswers;
+
+  const prompt = `Based on this quiz:
+- Room: ${room}
+- Size: ${size}
+- Budget: ${budget}
+- Style: ${style}
+- Priority: ${priority}
+
+Create a complete personalized room plan for Mahi with:
+1. Top 3 furniture pieces to buy with specific Indian brand names and prices
+2. Color palette recommendation (wall color + furniture colors)
+3. One hero piece that will transform the room
+4. 3 budget-friendly decor tips
+5. What to avoid for this style
+
+Make it exciting, specific and actionable!`;
+
+  addMessage("🎯 Quiz complete! Generating your personalized room plan...", 'ai');
+  showTyping();
+
+  const fullSystem = SYSTEM_PROMPT + "\n\n" + FURNITURE_KNOWLEDGE;
+  const requestBody = {
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      { role: "system", content: fullSystem },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.8,
+    max_tokens: 1500
+  };
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      removeTyping();
+      addMessage("Error: " + data.error.message, 'ai');
+      return;
+    }
+
+    const reply = data.choices[0].message.content;
+    removeTyping();
+    addMessage(reply, 'ai');
+    speakText(reply);
+    chatHistory.push({ role: "assistant", content: reply });
+
+    const styleQuery = `${style.replace(/[^a-zA-Z ]/g, '')} ${room.replace(/[^a-zA-Z ]/g, '')} interior design India`;
+    showGoogleImages(styleQuery);
+
+  } catch (error) {
+    removeTyping();
+    addMessage("Connection failed: " + error.message, 'ai');
+    console.error(error);
+  }
+}
 
 const brandLinks = {
   'Wakefit': 'https://www.wakefit.co/furniture',
